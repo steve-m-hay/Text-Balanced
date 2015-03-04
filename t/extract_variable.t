@@ -56,8 +56,16 @@ __DATA__
 # USING: extract_variable($str);
 # THESE SHOULD FAIL
 $a->;
+$a (1..3) { print $a };
 
-
+# USING: extract_variable($str);
+*var;
+*$var;
+*{var};
+*{$var};
+*var{cat};
+\&var;
+\&mod::var;
 $a;
 $_;
 $a[1];

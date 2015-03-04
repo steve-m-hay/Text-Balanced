@@ -150,6 +150,17 @@ In a void context the behaviour of the extraction subroutines is
 exactly the same as in a scalar context, except (of course) that the
 extracted substring is not returned.
 
+=head2 A note about prefixes
+
+Prefix patterns are matched without any trailing modifiers (C</gimsox> etc.)
+This can bite you if you're expecting a prefix specification like
+'.*?(?=<H1>)' to skip everything up to the first <H1> tag. Such a prefix
+pattern will only succeed if the <H1> tag is on the current line, since
+. normally doesn't match newlines.
+
+To overcome this limitation, you need to turn on /s matching within
+the prefix pattern, using the C<(?s)> directive: '(?s).*?(?=<H1>)'
+
 
 =head2 C<extract_delimited>
 
@@ -158,12 +169,12 @@ of extracting a single-character-delimited substring from the start of
 a string. For example, to extract a single-quote delimited string, the
 following code is typically used:
 
-	($remainder = $text) =~ s/\A('(\\'|[^'])*')//s;
+	($remainder = $text) =~ s/\A('(\\.|[^'])*')//s;
 	$extracted = $1;
 
 but with C<extract_delimited> it can be simplified to:
 
-	($extracted,$remainder) = extract_delimited $text, "'";
+	($extracted,$remainder) = extract_delimited($text, "'");
 
 C<extract_delimited> takes up to four scalars (the input text, the
 delimiters, a prefix pattern to be skipped, and any escape characters)
@@ -793,7 +804,7 @@ A string to be processed (C<$_> if the string is omitted or C<undef>)
 =item 2.
 
 A reference to a list of subroutine references and/or qr// objects and/or
-literal string, specifying the extractors
+literal strings and/or hash references, specifying the extractors
 to be used to split the string. If this argument is omitted (or
 C<undef>) the list:
 
@@ -816,7 +827,7 @@ have been successfully extracted, or until the string has been completely
 processed.
 
 Note that in scalar and void contexts the value of this argument is 
-automatically reset to 1 (under -w a warning is issued if the argument 
+automatically reset to 1 (under C<-w>, a warning is issued if the argument 
 has to be reset).
 
 =item 4.
@@ -842,8 +853,16 @@ it is matched against the text in a scalar context with a leading
 $1 if that variable is defined after the match, or else the
 complete match (i.e. $&).
 
+If the extractor is a hash reference, it must contain exactly one element.
+The value of that element is one of the
+above extractor types (subroutine reference, regular expression, or string).
+The key of that element is the name of a class into which the successful
+return value of the extractor will be blessed.
+
 If an extractor returns a defined value, that value is immediately
-treated as the next extracted field and pushed onto the list of fields. 
+treated as the next extracted field and pushed onto the list of fields.
+If the extractor was specified in a hash reference, the field is also
+blessed into the appropriate class, 
 
 If the extractor fails to match (in the case of a regex extractor), or returns an empty list or an undefined value (in the case of a subroutine extractor), it is
 assumed to have failed to extract.
@@ -860,13 +879,14 @@ For example, the following extracts substrings that are valid Perl variables:
 				   undef, 1);
 
 This example separates a text into fields which are quote delimited,
-curly bracketed, and anything else:
+curly bracketed, and anything else. The delimited and bracketed
+parts are also blessed to identify them (the "anything else" is unblessed):
 
 	@fields = extract_multiple($text,
-				   [
-					sub { extract_delimited($_[0],q{'"}) },
-					sub { extract_bracketed($_[0],'{}') },
-				   ]);
+		   [
+			{ Delim => sub { extract_delimited($_[0],q{'"}) } },
+			{ Brack => sub { extract_bracketed($_[0],'{}') } },
+		   ]);
 
 This call extracts the next single substring that is a valid Perl quotelike
 operator (and removes it from $text):

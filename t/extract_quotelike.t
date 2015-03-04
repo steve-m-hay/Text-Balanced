@@ -1,3 +1,4 @@
+#! /usr/local/bin/perl -ws
 # Before `make install' is performed this script should be runnable with
 # `make test'. After `make install' it should work as `perl test.pl'
 
@@ -6,7 +7,7 @@
 # Change 1..1 below to 1..last_test_to_print .
 # (It may become useful if the test is moved to ./t subdirectory.)
 
-BEGIN { $| = 1; print "1..53\n"; }
+BEGIN { $| = 1; print "1..63\n"; }
 END {print "not ok 1\n" unless $loaded;}
 use Text::Balanced qw ( extract_quotelike );
 $loaded = 1;
@@ -54,11 +55,16 @@ while (defined($str = <DATA>))
 __DATA__
 
 # USING: extract_quotelike($str);
-
-
+"";
+'';
 "a";
 'b';
 `cc`;
+
+
+"this is a nested $var[$x] {";
+/a/gci;
+m/a/gci;
 
 q(d);
 qq(e);

@@ -10,7 +10,7 @@ use Exporter;
 use SelfLoader;
 use vars qw { $VERSION @ISA %EXPORT_TAGS };
 
-$VERSION = '1.77';
+$VERSION = '1.81';
 @ISA		= qw ( Exporter );
 		     
 %EXPORT_TAGS	= ( ALL => [ qw(
@@ -246,7 +246,7 @@ sub revbracket($)
 	return $brack;
 }
 
-my $XMLNAME = q{[a-zA-Z_:][a-zA-Z_:.-]*};
+my $XMLNAME = q{[a-zA-Z_:][a-zA-Z0-9_:.-]*};
 
 sub extract_tagged (;$$$$$) # ($text, $opentag, $closetag, $pre, \%options)
 {
@@ -279,6 +279,7 @@ sub extract_tagged (;$$$$$) # ($text, $opentag, $closetag, $pre, \%options)
 sub _match_tagged	# ($$$$$$$)
 {
 	my ($textref, $pre, $ldel, $rdel, $omode, $bad, $ignore) = @_;
+	my $rdelspec;
 
 	my ($startpos, $opentagpos, $textpos, $parapos, $closetagpos, $endpos) = ( pos($$textref) = pos($$textref)||0 );
 
@@ -290,7 +291,7 @@ sub _match_tagged	# ($$$$$$$)
 
 	$opentagpos = pos($$textref);
 
-	unless ($$textref =~ m/\G($ldel)/gc)
+	unless ($$textref =~ m/\G$ldel/gc)
 	{
 		$@ = "Did not find opening tag: /$ldel/";
 		goto failed;
@@ -300,12 +301,16 @@ sub _match_tagged	# ($$$$$$$)
 
 	if (!defined $rdel)
 	{
-		$rdel = $1;
-		unless ($rdel =~ s/\A([[(<{]+)($XMLNAME).*/ "$1\/$2". revbracket($1) /oes)
+		$rdelspec = $&;
+		unless ($rdelspec =~ s/\A([[(<{]+)($XMLNAME).*/ quotemeta "$1\/$2". revbracket($1) /oes)
 		{
 			$@ = "Unable to construct closing tag to match: $rdel";
 			goto failed;
 		}
+	}
+	else
+	{
+		$rdelspec = eval "qq{$rdel}";
 	}
 
 	while (pos($$textref) < length($$textref))
@@ -317,7 +322,7 @@ sub _match_tagged	# ($$$$$$$)
 			$parapos = pos($$textref) - length($1)
 				unless defined $parapos;
 		}
-		elsif ($$textref =~ m/\G($rdel)/gc )
+		elsif ($$textref =~ m/\G($rdelspec)/gc )
 		{
 			$closetagpos = pos($$textref)-length($1);
 			goto matched;
@@ -403,7 +408,7 @@ sub _match_variable($$)
 		return;
 	}
 	my $varpos = pos($$textref);
-	unless ($$textref =~ m/\G(\$#?|[\@\%])+/gc)
+	unless ($$textref =~ m/\G(\$#?|[*\@\%]|\\&)+/gc)
 	{
 		$@ = "Did not find leading dereferencer";
 		pos $$textref = $startpos;
@@ -418,14 +423,19 @@ sub _match_variable($$)
 		return;
 	}
 
-	1 while ( _match_codeblock($textref,'\s*(?:->(?:\s*\w+\s*)?)?\s*',
-				   '[({[]','[)}\]]',
-				   '[({[]','[)}\]]',
-				   0
-				   )
-	        || _match_variable($textref,'\s*->\s*')
-	        || $$textref =~ m/\G\s*->\s*\w+(?![{([])/gc
-	        );
+	while (1)
+	{
+		next if _match_codeblock($textref,
+					 qr/\s*->\s*(?:[a-zA-Z]\w+\s*)?/,
+					 qr/[({[]/, qr/[)}\]]/,
+					 qr/[({[]/, qr/[)}\]]/, 0);
+		next if _match_codeblock($textref,
+					 qr/\s*/, qr/[{[]/, qr/[}\]]/,
+					 qr/[{[]/, qr/[}\]]/, 0);
+		next if _match_variable($textref,'\s*->\s*');
+		next if $$textref =~ m/\G\s*->\s*\w+(?![{([])/gc;
+		last;
+	}
 	
 	my $endpos = pos($$textref);
 	return ($startpos, $varpos-$startpos,
@@ -687,7 +697,8 @@ sub _match_quotelike($$$$)	# ($textref, $prepat, $allow_raw_match)
 	}
 	$ld2pos = $rd1pos = pos($$textref)-1;
 
-	if ($op =~ /s|tr|y/)
+	my $second_arg = $op =~ /s|tr|y/ ? 1 : 0;
+	if ($second_arg)
 	{
 		my ($ldel2, $rdel2);
 		if ($ldel1 =~ /[[(<{]/)
@@ -736,9 +747,9 @@ sub _match_quotelike($$$$)	# ($textref, $prepat, $allow_raw_match)
 		$ld1pos,	1,			# LEFT DEL
 		$str1pos,	$rd1pos-$str1pos,	# STR/PAT
 		$rd1pos,	1,			# RIGHT DEL
-		$ld2pos,	1,			# 2ND LDEL
-		$str2pos,	$rd2pos-$str2pos,	# 2ND STR
-		$rd2pos,	1,			# 2ND RDEL
+		$ld2pos,	$second_arg,		# 2ND LDEL (MAYBE)
+		$str2pos,	$rd2pos-$str2pos,	# 2ND STR (MAYBE)
+		$rd2pos,	$second_arg,		# 2ND RDEL (MAYBE)
 		$modpos,	$endpos-$modpos,	# MODIFIERS
 		$endpos,	$textlen-$endpos,	# REMAINDER
 	       );
@@ -776,16 +787,34 @@ sub extract_multiple (;$$$$)	# ($text, $functions_ref, $max_fields, $ignoreunkno
 
 		my $unkpos;
 		my $func;
-		my $field;
+		my $class;
+
+		my @class;
+		foreach $func ( @func )
+		{
+			if (ref($func) eq 'HASH')
+			{
+				push @class, (keys %$func)[0];
+				$func = (values %$func)[0];
+			}
+			else
+			{
+				push @class, undef;
+			}
+		}
 
 		FIELD: while (pos() < length())
 		{
-			foreach $func ( @func )
+			my $field;
+			foreach my $i ( 0..$#func )
 			{
-				undef $field;
+				$func = $func[$i];
+				$class = $class[$i];
 				$lastpos = pos;
 				if (ref($func) eq 'CODE')
 					{ ($field) = $func->($_) }
+				elsif (ref($func) eq 'Text::Balanced::Extractor')
+					{ $field = $func->extract($_) }
 				elsif( m/\G$func/gc )
 					{ $field = defined($1) ? $1 : $& }
 
@@ -798,7 +827,9 @@ sub extract_multiple (;$$$$)	# ($text, $functions_ref, $max_fields, $ignoreunkno
 						undef $unkpos;
 						last FIELD if @fields == $max;
 					}
-					push @fields, $field;
+					push @fields, $class 
+						? bless(\$field, $class)
+						: $field;
 					$firstpos = $lastpos unless defined $firstpos;
 					$lastpos = pos;
 					last FIELD if @fields == $max;

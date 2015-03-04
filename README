@@ -1,5 +1,5 @@
 ==============================================================================
-                  Release of version 1.77 of Text::Balanced
+                  Release of version 1.81 of Text::Balanced
 ==============================================================================
 
 
@@ -66,13 +66,32 @@ COPYRIGHT
 
 ==============================================================================
 
-CHANGES IN VERSION 1.77
+CHANGES IN VERSION 1.81
 
 
-	- Fixed major bug in extract_codeblock (would not 
-	  terminate if there was trailing whitespace)
+	- Fixed test count in extract_codeblock.t
 
-	- Improved /.../ pattern parsing within codeblocks
+	- Fixed improbable bug with trailing ->'s in extract_variable
+
+	- Fixed (HT|X)ML tag extraction in extract_tagged (thanks, Tim)
+
+	- Added explanatory note about prefix matching (thanks again, Tim)
+
+	- Added handling of globs and sub refs to extract_variable
+
+	- Pod tweak (thanks Abigail)
+
+	- Allowed right tags to be run-time evaluated, so
+	  extract_tagged($text, '/([a-z]+)', '/end$1') works
+	  as expected.
+
+	- Added optional blessing of matches via extract_multiple
+
+	- Fixed bug in autogeneration of closing tags in extract_tagged
+	  (Thanks, Coke)
+
+	- Fixed bug in interaction between extract_multiple and
+	  gen_extract_tagged (Thanks Anthony)
 
 
 ==============================================================================

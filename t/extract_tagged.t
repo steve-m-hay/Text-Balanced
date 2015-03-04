@@ -6,9 +6,9 @@
 # Change 1..1 below to 1..last_test_to_print .
 # (It may become useful if the test is moved to ./t subdirectory.)
 
-BEGIN { $| = 1; print "1..35\n"; }
+BEGIN { $| = 1; print "1..53\n"; }
 END {print "not ok 1\n" unless $loaded;}
-use Text::Balanced qw ( extract_tagged );
+use Text::Balanced qw ( extract_tagged gen_extract_tagged );
 $loaded = 1;
 print "ok 1\n";
 $count=2;
@@ -52,6 +52,26 @@ while (defined($str = <DATA>))
 }
 
 __DATA__
+# USING: gen_extract_tagged("BEGIN([A-Z]+)",'END$1',"(?s).*?(?=BEGIN)")->($str);
+	ignore\n this and then BEGINHERE at the ENDHERE;
+	ignore\n this and then BEGINTHIS at the ENDTHIS;
+
+# USING: extract_tagged($str,"BEGIN([A-Z]+)",'END$1',"(?s).*?(?=BEGIN)");
+	ignore\n this and then BEGINHERE at the ENDHERE;
+	ignore\n this and then BEGINTHIS at the ENDTHIS;
+
+# USING: extract_tagged($str,"BEGIN([A-Z]+)",'END$1',"(?s).*?(?=BEGIN)");
+	ignore\n this and then BEGINHERE at the ENDHERE;
+	ignore\n this and then BEGINTHIS at the ENDTHIS;
+
+# THIS SHOULD FAIL
+	ignore\n this and then BEGINTHIS at the ENDTHAT;
+
+# USING: extract_tagged($str,"BEGIN","END","(?s).*?(?=BEGIN)");
+	ignore\n this and then BEGIN at the END;
+
+# USING: extract_tagged($str);
+	<A-1 HREF="#section2">some text</A-1>;
 
 # USING: extract_tagged($str,qr/<[A-Z]+>/,undef, undef, {ignore=>["<BR>"]});
 	<A>aaa<B>bbb<BR>ccc</B>ddd</A>;
