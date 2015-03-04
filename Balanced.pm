@@ -8,7 +8,7 @@ package Text::Balanced;
 use Exporter;
 use vars qw { $VERSION @ISA @EXPORT_OK };
 
-$VERSION	= 1.20;
+$VERSION	= 1.21;
 @ISA		= qw ( Exporter );
 @EXPORT_OK	= qw (
 			&extract_delimited
