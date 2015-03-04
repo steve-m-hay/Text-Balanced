@@ -18,4 +18,10 @@ Revision history for Perl extension Text::Balanced.
 
 1.21  Sat Oct  4 17:21:54 EST 1997
 
-	- synchronised with Parse::RecDescent distribution
+	- synchronised with Parse::RecDescent distribution (version number
+	  will now reflect that package)
+
+1.23  Fri Oct 17 10:26:38 EST 1997
+	- changed behaviour in scalar and void contexts. Scalar contexts
+	  now return only the extracted string. Void contexts now remove
+	  the extracted string from the first argument (or $_).
