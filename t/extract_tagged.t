@@ -23,7 +23,6 @@ $neg = 0;
 while (defined($str = <DATA>))
 {
 	chomp $str;
-	$str =~ s/\\n/\n/g;
 	if ($str =~ s/\A# USING://) { $neg = 0; $cmd = $str; next; }
 	elsif ($str =~ /\A# TH[EI]SE? SHOULD FAIL/) { $neg = 1; next; }
 	elsif (!$str || $str =~ /\A#/) { $neg = 0; next }

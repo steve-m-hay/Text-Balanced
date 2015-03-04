@@ -681,6 +681,92 @@ Examples:
 		}
 
 
+=head2 C<extract_quotelike> and "here documents"
+
+C<extract_quotelike> can successfully extract "here documents" from an input
+string, but with an important caveat in list contexts.
+
+Unlike other types of quote-like literals, a here document is rarely
+a contiguous substring. For example, a typical piece of code using
+here document might look like this:
+
+        <<'EOMSG' || die;
+        This is the message.
+        EOMSG
+	exit;
+
+Given this as an input string in a scalar context, C<extract_quotelike>
+would correctly return the string "<<'EOMSG'\nThis is the message.\nEOMSG",
+leaving the string " || die;\nexit;" in the original variable. In other words,
+the two separate pieces of the here document are successfully extracted and
+concatenated.
+
+In a list context, C<extract_quotelike> would return the list
+
+=over 4
+
+=item [0]
+
+"<<'EOMSG'\nThis is the message.\nEOMSG\n" (i.e. the full extracted here document,
+including fore and aft delimiters),
+
+=item [1]
+
+" || die;\nexit;" (i.e. the remainder of the input text, concatenated),
+
+=item [2]
+
+"" (i.e. the prefix substring -- trivial in this case),
+
+=item [3]
+
+"<<" (i.e. the "name" of the quotelike operator)
+
+=item [4]
+
+"'EOMSG'" (i.e. the left delimiter of the here document, including any quotes),
+
+=item [5]
+
+"This is the message.\n" (i.e. the text of the here document),
+
+=item [6]
+
+"EOMSG" (i.e. the right delimiter of the here document),
+
+=item [7..10]
+
+"" (a here document has no second left delimiter, second text, second right
+delimiter, or trailing modifiers).
+
+=back
+
+However, the matching position of the input variable would be set to
+"exit;" (i.e. I<after> the closing delimiter of the here document),
+which would cause the earlier " || die;\nexit;" to be skipped in any
+sequence of code fragment extractions.
+
+To avoid this problem, when it encounters a here document whilst
+extracting from a modifiable string, C<extract_quotelike> silently
+rearranges the string to an equivalent piece of Perl:
+
+        <<'EOMSG'
+        This is the message.
+        EOMSG
+        || die;
+	exit;
+
+in which the here document I<is> contiguous. It still leaves the
+matching position after the here document, but now the rest of the line
+on which the here document starts is not skipped.
+
+To prevent <extract_quotelike> from mucking about with the input in this way
+(this is the only case where a list-context C<extract_quotelike> does so),
+you can pass the input variable as an interpolated literal:
+
+        $quotelike = extract_quotelike("$var");
+
+
 =head2 C<extract_codeblock>
 
 C<extract_codeblock> attempts to recognize and extract a balanced
@@ -734,17 +820,17 @@ then go back to step 1.
 
 Examples:
 
-	# Find a while loop in the text
+        # Find a while loop in the text
 
-		if ($text =~ s/.*?while\s*\{/{/)
-		{
-			$loop = "while " . extract_codeblock($text);
-		}
+                if ($text =~ s/.*?while\s*\{/{/)
+                {
+                        $loop = "while " . extract_codeblock($text);
+                }
 
-	# Remove the first round-bracketed list (which may include
-	# round- or curly-bracketed code blocks or quotelike operators)
+        # Remove the first round-bracketed list (which may include
+        # round- or curly-bracketed code blocks or quotelike operators)
 
-		extract_codeblock $text, "(){}", '[^(]*';
+                extract_codeblock $text, "(){}", '[^(]*';
 
 
 The ability to specify a different outermost delimiter bracket is useful
@@ -752,19 +838,19 @@ in some circumstances. For example, in the Parse::RecDescent module,
 parser actions which are to be performed only on a successful parse
 are specified using a C<E<lt>defer:...E<gt>> directive. For example:
 
-	sentence: subject verb object
-			<defer: {$::theVerb = $item{verb}} >
+        sentence: subject verb object
+                        <defer: {$::theVerb = $item{verb}} >
 
 Parse::RecDescent uses C<extract_codeblock($text, '{}E<lt>E<gt>')> to extract the code
 within the C<E<lt>defer:...E<gt>> directive, but there's a problem.
 
 A deferred action like this:
 
-			<defer: {if ($count>10) {$count--}} >
+                        <defer: {if ($count>10) {$count--}} >
 
 will be incorrectly parsed as:
 
-			<defer: {if ($count>
+                        <defer: {if ($count>
 
 because the "less than" operator is interpreted as a closing delimiter.
 
@@ -808,11 +894,11 @@ literal strings and/or hash references, specifying the extractors
 to be used to split the string. If this argument is omitted (or
 C<undef>) the list:
 
-	[
-		sub { extract_variable($_[0], '') },
-		sub { extract_quotelike($_[0],'') },
-		sub { extract_codeblock($_[0],'{}','') },
-	]
+        [
+                sub { extract_variable($_[0], '') },
+                sub { extract_quotelike($_[0],'') },
+                sub { extract_codeblock($_[0],'{}','') },
+        ]
 
 is used.
 
@@ -874,33 +960,33 @@ case they are disgarded).
 
 For example, the following extracts substrings that are valid Perl variables:
 
-	@fields = extract_multiple($text,
-				   [ sub { extract_variable($_[0]) } ],
-				   undef, 1);
+        @fields = extract_multiple($text,
+                                   [ sub { extract_variable($_[0]) } ],
+                                   undef, 1);
 
 This example separates a text into fields which are quote delimited,
 curly bracketed, and anything else. The delimited and bracketed
 parts are also blessed to identify them (the "anything else" is unblessed):
 
-	@fields = extract_multiple($text,
-		   [
-			{ Delim => sub { extract_delimited($_[0],q{'"}) } },
-			{ Brack => sub { extract_bracketed($_[0],'{}') } },
-		   ]);
+        @fields = extract_multiple($text,
+                   [
+                        { Delim => sub { extract_delimited($_[0],q{'"}) } },
+                        { Brack => sub { extract_bracketed($_[0],'{}') } },
+                   ]);
 
 This call extracts the next single substring that is a valid Perl quotelike
 operator (and removes it from $text):
 
-	$quotelike = extract_multiple($text,
-				      [
-					sub { extract_quotelike($_[0]) },
-				      ], undef, 1);
+        $quotelike = extract_multiple($text,
+                                      [
+                                        sub { extract_quotelike($_[0]) },
+                                      ], undef, 1);
 
 Finally, here is yet another way to do comma-separated value parsing:
 
         @fields = extract_multiple($csv_text,
                                   [
-					sub { extract_delimited($_[0],q{'"}) },
+                                        sub { extract_delimited($_[0],q{'"}) },
                                         qr/([^,]+)(.*)/,
                                   ],
                                   undef,1);
@@ -923,11 +1009,11 @@ The C<gen_delimited_pat> subroutine takes a single (string) argument and
 builds a Friedl-style optimized regex that matches a string delimited
 by any one of the characters in the single argument. For example:
 
-	gen_delimited_pat(q{'"})
+        gen_delimited_pat(q{'"})
 
 returns the regex:
 
-	(?:\"(?:\\\"|(?!\").)*\"|\'(?:\\\'|(?!\').)*\')
+        (?:\"(?:\\\"|(?!\").)*\"|\'(?:\\\'|(?!\').)*\')
 
 Note that the specified delimiters are automatically quotemeta'd.
 
@@ -935,9 +1021,9 @@ A typical use of C<gen_delimited_pat> would be to build special purpose tags
 for C<extract_tagged>. For example, to properly ignore "empty" XML elements
 (which might contain quoted strings):
 
-	my $empty_tag = '<(' . gen_delimited_pat(q{'"}) . '|.)+/>';
+        my $empty_tag = '<(' . gen_delimited_pat(q{'"}) . '|.)+/>';
 
-	extract_tagged($text, undef, undef, undef, {ignore => [$empty_tag]} );
+        extract_tagged($text, undef, undef, undef, {ignore => [$empty_tag]} );
 
 
 C<gen_delimited_pat> may also be called with an optional second argument,
@@ -945,13 +1031,13 @@ which specifies the "escape" character(s) to be used for each delimiter.
 For example to match a Pascal-style string (where ' is the delimiter
 and '' is a literal ' within the string):
 
-	gen_delimited_pat(q{'},q{'});
+        gen_delimited_pat(q{'},q{'});
 
 Different escape characters can be specified for different delimiters.
 For example, to specify that '/' is the escape for single quotes
 and '%' is the escape for double quotes:
 
-	gen_delimited_pat(q{'"},q{/%});
+        gen_delimited_pat(q{'"},q{/%});
 
 If more delimiters than escape chars are specified, the last escape char
 is used for the remaining delimiters.
@@ -960,7 +1046,7 @@ If no escape char is specified for a given specified delimiter, '\' is used.
 Note that 
 C<gen_delimited_pat> was previously called
 C<delimited_pat>. That name may still be used, but is now deprecated.
-	
+        
 
 =head1 DIAGNOSTICS
 
@@ -968,9 +1054,15 @@ In a list context, all the functions return C<(undef,$original_text)>
 on failure. In a scalar context, failure is indicated by returning C<undef>
 (in this case the input text is not modified in any way).
 
-In addition, on failure in I<any> context, one of the following explanatory
-diagnostic messages is returned in the standard C<$@> variable (on success the
-C<$@> variable is guaranteed to be C<undef>):
+In addition, on failure in I<any> context, the C<$@> variable is set.
+Accessing C<$@-E<gt>{error}> returns one of the error diagnostics listed
+below.
+Accessing C<$@-E<gt>{pos}> returns the offset into the original string at
+which the error was detected (although not necessarily where it occurred!)
+Printing C<$@> directly produces the error message, with the offset appended.
+On success, the C<$@> variable is guaranteed to be C<undef>.
+
+The available diagnostics are:
 
 =over 4
 
@@ -1112,4 +1204,3 @@ Bug reports and other feedback are most welcome.
  This module is free software. It may be used, redistributed
 and/or modified under the terms of the Perl Artistic License
      (see http://www.perl.com/perl/misc/Artistic.html)
-

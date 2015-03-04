@@ -6,7 +6,7 @@
 # Change 1..1 below to 1..last_test_to_print .
 # (It may become useful if the test is moved to ./t subdirectory.)
 
-BEGIN { $| = 1; print "1..29\n"; }
+BEGIN { $| = 1; print "1..37\n"; }
 END {print "not ok 1\n" unless $loaded;}
 use Text::Balanced qw ( extract_codeblock );
 $loaded = 1;
@@ -23,7 +23,6 @@ $neg = 0;
 while (defined($str = <DATA>))
 {
 	chomp $str;
-	$str =~ s/\\n/\n/g;
 	if ($str =~ s/\A# USING://) { $neg = 0; $cmd = $str; next; }
 	elsif ($str =~ /\A# TH[EI]SE? SHOULD FAIL/) { $neg = 1; next; }
 	elsif (!$str || $str =~ /\A#/) { $neg = 0; next }
@@ -33,11 +32,11 @@ while (defined($str = <DATA>))
 
 	my @res;
 	$var = eval "\@res = $cmd";
+	debug "\t   Failed: $@ at " . $@+0 .")" if $@;
 	debug "\t list got: [" . join("|",@res) . "]\n";
 	debug "\t list left: [$str]\n";
 	print "not " if (substr($str,pos($str)||0,1) eq ';')==$neg;
 	print "ok ", $count++;
-	print " ($@)" if $@ && $DEBUG;
 	print "\n";
 
 	pos $str = 0;
@@ -57,6 +56,9 @@ __DATA__
 < %x = ( try => "this") >;
 < %x = () >;
 < %x = ( $try->{this}, "too") >;
+< %'x = ( $try->{this}, "too") >;
+< %'x'y = ( $try->{this}, "too") >;
+< %::x::y = ( $try->{this}, "too") >;
 
 # THIS SHOULD FAIL
 < %x = do { $try > 10 } >;
@@ -84,3 +86,4 @@ __DATA__
 
 # THIS SHOULD FAIL
 { $a = $b; # what's this doing here? };'
+{ $a = $b; # what's this doing here? ;'

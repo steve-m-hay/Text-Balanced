@@ -6,7 +6,7 @@
 # Change 1..1 below to 1..last_test_to_print .
 # (It may become useful if the test is moved to ./t subdirectory.)
 
-BEGIN { $| = 1; print "1..53\n"; }
+BEGIN { $| = 1; print "1..77\n"; }
 END {print "not ok 1\n" unless $loaded;}
 use Text::Balanced qw ( extract_variable );
 $loaded = 1;
@@ -23,7 +23,6 @@ $neg = 0;
 while (defined($str = <DATA>))
 {
 	chomp $str;
-	$str =~ s/\\n/\n/g;
 	if ($str =~ s/\A# USING://) { $neg = 0; $cmd = $str; next; }
 	elsif ($str =~ /\A# TH[EI]SE? SHOULD FAIL/) { $neg = 1; next; }
 	elsif (!$str || $str =~ /\A#/) { $neg = 0; next }
@@ -66,6 +65,7 @@ $a (1..3) { print $a };
 *var{cat};
 \&var;
 \&mod::var;
+\&mod'var;
 $a;
 $_;
 $a[1];
@@ -83,6 +83,8 @@ $obj->nextval;
 @{$obj->nextval(cat()?$dog:$fish)->{new}};
 $ a {'cat'};
 $a::b::c{d}->{$e->()};
+$a'b'c'd{e}->{$e->()};
+$a'b::c'd{e}->{$e->()};
 $#_;
 $#array;
 $#{array};
@@ -92,6 +94,7 @@ $var[$#var];
 $a->;
 @{$;
 $ a :: b :: c
+$ a ' b ' c
 
 # USING: extract_variable($str,'=*');
 ========$a;

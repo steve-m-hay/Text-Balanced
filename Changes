@@ -206,3 +206,17 @@ Revision history for Perl extension Text::Balanced.
 
 	- Fixed bug in interaction between extract_multiple and
 	  gen_extract_tagged (Thanks Anthony)
+
+
+1.82	Sun Jan 14 16:56:04 2001
+
+	- Fixed nit in extract_variable.t
+	  (tested more cases than it promised to)
+
+	- Fixed bug extracting prefix in extract_quotelike (Thanks Michael)
+
+	- Added handling of Perl 4 package qualifier: $Package'var, etc.
+
+	- Added handling of here docs (see documentation for limitations)
+
+	- Added reporting of failure position via $@->{pos} (see documentation)

@@ -10,7 +10,7 @@ use Exporter;
 use SelfLoader;
 use vars qw { $VERSION @ISA %EXPORT_TAGS };
 
-$VERSION = '1.81';
+$VERSION = '1.82';
 @ISA		= qw ( Exporter );
 		     
 %EXPORT_TAGS	= ( ALL => [ qw(
@@ -39,9 +39,15 @@ sub _match_quotelike($$$$);
 
 # HANDLE RETURN VALUES IN VARIOUS CONTEXTS
 
+sub _failmsg {
+	my ($message, $pos) = @_;
+	$@ = bless { error=>$message, pos=>$pos }, "Text::Balanced::ErrorMsg";
+}
+
 sub _fail
 {
-	my ($wantarray,$textref) = @_;
+	my ($wantarray, $textref, $message, $pos) = @_;
+	_failmsg $message, $pos if $message;
 	return ("",$$textref,"") if $wantarray;
 	return undef;
 }
@@ -50,21 +56,35 @@ sub _succeed
 {
 	$@ = undef;
 	my ($wantarray,$textref) = splice @_, 0, 2;
+	my ($extrapos, $extralen) = @_>18 ? splice(@_, -2, 2) : (0,0);
+	my $remainderpos = $_[2];
 	if ($wantarray)
 	{
-		# print join ("|", @_), "\n";
 		my @res;
-		pos($$textref) = $_[2];			# RESET \G
 		while (my ($from, $len) = splice @_, 0, 2)
 		{
 			push @res, substr($$textref,$from,$len);
+		}
+		if ($extralen) {	# CORRECT FILLET
+			my $extra = substr($res[0], $extrapos, $extralen, "\n");
+			$res[1] = "$extra$res[1]";
+			eval { substr($$textref,$remainderpos,0) = $extra;
+			       substr($$textref,$extrapos,$extralen,"\n")} ;
+				#REARRANGE HERE DOC AND FILLET IF POSSIBLE
+			pos($$textref) = $remainderpos-$extralen+1; # RESET \G
+		}
+		else {
+			pos($$textref) = $remainderpos;		    # RESET \G
 		}
 		return @res;
 	}
 	else
 	{
 		my $match = substr($$textref,$_[0],$_[1]);
-		eval {substr($$textref,$_[4],$_[1]+$_[5])=""} ;	#CHOP OUT PREFIX & MATCH, IF POSSIBLE
+		substr($match,$extrapos-$_[0],$extralen,"") if $extralen;
+		my $extra = $extralen
+			? substr($$textref, $extrapos, $extralen)."\n" : "";
+		eval {substr($$textref,$_[4],$_[1]+$_[5])=$extra} ;	#CHOP OUT PREFIX & MATCH, IF POSSIBLE
 		pos($$textref) = $_[4];				# RESET \G
 		return $match;
 	}
@@ -111,7 +131,7 @@ sub extract_delimited (;$$$$)
 	my $esc  = defined $_[3] ? $_[3] : qq{\\};
 	my $pat = gen_delimited_pat($del, $esc);
 	my $startpos = pos $$textref || 0;
-	return _fail($wantarray, $textref)
+	return _fail($wantarray, $textref, "Not a delimited pattern", 0)
 		unless $$textref =~ m/\G($pre)($pat)/gc;
 	my $prelen = length($1);
 	my $matchpos = $startpos+$prelen;
@@ -138,8 +158,9 @@ sub extract_bracketed (;$$$)
 	my $rdel = $ldel;
 	unless ($rdel =~ tr/[({</])}>/)
         {
-		$@ = "Did not find a suitable bracket in delimiter: \"$_[1]\"";
-		return _fail $wantarray, $textref;
+		return _fail $wantarray, $textref,
+			     "Did not find a suitable bracket in delimiter: \"$_[1]\"",
+			     0;
 	}
 	my $posbug = pos;
 	$ldel = join('|', map { quotemeta $_ } split('', $ldel));
@@ -164,7 +185,7 @@ sub _match_bracketed($$$$$$)	# $textref, $pre, $ldel, $qdel, $quotelike, $rdel
 	my ($startpos, $ldelpos, $endpos) = (pos $$textref = pos $$textref||0);
 	unless ($$textref =~ m/\G$pre/gc)
 	{
-		$@ = "Did not find prefix: /$pre/";
+		_failmsg "Did not find prefix: /$pre/", $startpos;
 		return;
 	}
 
@@ -172,7 +193,8 @@ sub _match_bracketed($$$$$$)	# $textref, $pre, $ldel, $qdel, $quotelike, $rdel
 
 	unless ($$textref =~ m/\G($ldel)/gc)
 	{
-		$@ = "Did not find opening bracket after prefix: \"$pre\"";
+		_failmsg "Did not find opening bracket after prefix: \"$pre\"",
+		         pos $$textref;
 		pos $$textref = $startpos;
 		return;
 	}
@@ -192,7 +214,8 @@ sub _match_bracketed($$$$$$)	# $textref, $pre, $ldel, $qdel, $quotelike, $rdel
 			my ($found, $brackettype) = ($1, $1);
 			if ($#nesting < 0)
 			{
-				$@ = "Unmatched closing bracket: \"$found\"";
+				_failmsg "Unmatched closing bracket: \"$found\"",
+					 pos $$textref;
 				pos $$textref = $startpos;
 			        return;
 			}
@@ -200,7 +223,8 @@ sub _match_bracketed($$$$$$)	# $textref, $pre, $ldel, $qdel, $quotelike, $rdel
 			$expected =~ tr/({[</)}]>/;
 			if ($expected ne $brackettype)
 			{
-				$@ = qq{Mismatched closing bracket: expected "$expected" but found "$found"};
+				_failmsg qq{Mismatched closing bracket: expected "$expected" but found "$found"},
+					 pos $$textref;
 				pos $$textref = $startpos;
 			        return;
 			}
@@ -209,7 +233,8 @@ sub _match_bracketed($$$$$$)	# $textref, $pre, $ldel, $qdel, $quotelike, $rdel
 		elsif ($qdel && $$textref =~ m/\G([$qdel])/gc)
 		{
 			$$textref =~ m/\G[^\\$1]*(?:\\.[^\\$1]*)*(\Q$1\E)/gc and next;
-			$@ = "Unmatched embedded quote ($1)";
+			_failmsg "Unmatched embedded quote ($1)",
+				 pos $$textref;
 			pos $$textref = $startpos;
 			return;
 		}
@@ -222,8 +247,9 @@ sub _match_bracketed($$$$$$)	# $textref, $pre, $ldel, $qdel, $quotelike, $rdel
 	}
 	if ($#nesting>=0)
 	{
-		$@ = "Unmatched opening bracket(s): "
-		     . join("..",@nesting)."..";
+		_failmsg "Unmatched opening bracket(s): "
+				. join("..",@nesting)."..",
+		         pos $$textref;
 		pos $$textref = $startpos;
 		return;
 	}
@@ -285,7 +311,7 @@ sub _match_tagged	# ($$$$$$$)
 
 	unless ($$textref =~ m/\G($pre)/gc)
 	{
-		$@ = "Did not find prefix: /$pre/";
+		_failmsg "Did not find prefix: /$pre/", pos $$textref;
 		goto failed;
 	}
 
@@ -293,7 +319,7 @@ sub _match_tagged	# ($$$$$$$)
 
 	unless ($$textref =~ m/\G$ldel/gc)
 	{
-		$@ = "Did not find opening tag: /$ldel/";
+		_failmsg "Did not find opening tag: /$ldel/", pos $$textref;
 		goto failed;
 	}
 
@@ -304,7 +330,8 @@ sub _match_tagged	# ($$$$$$$)
 		$rdelspec = $&;
 		unless ($rdelspec =~ s/\A([[(<{]+)($XMLNAME).*/ quotemeta "$1\/$2". revbracket($1) /oes)
 		{
-			$@ = "Unable to construct closing tag to match: $rdel";
+			_failmsg "Unable to construct closing tag to match: $rdel",
+				 pos $$textref;
 			goto failed;
 		}
 	}
@@ -335,7 +362,7 @@ sub _match_tagged	# ($$$$$$$)
 		{
 			pos($$textref) -= length($1);	# CUT OFF WHATEVER CAUSED THE SHORTNESS
 			goto short if ($omode eq 'PARA' || $omode eq 'MAX');
-			$@ = "Found invalid nested tag: $1";
+			_failmsg "Found invalid nested tag: $1", pos $$textref;
 			goto failed;
 		}
 		elsif ($$textref =~ m/\G($ldel)/gc)
@@ -345,7 +372,8 @@ sub _match_tagged	# ($$$$$$$)
 			unless (_match_tagged(@_))	# MATCH NESTED TAG
 			{
 				goto short if $omode eq 'PARA' || $omode eq 'MAX';
-				$@ = "Found unbalanced nested tag: $tag";
+				_failmsg "Found unbalanced nested tag: $tag",
+					 pos $$textref;
 				goto failed;
 			}
 		}
@@ -379,7 +407,7 @@ matched:
 	       );
 
 failed:
-	$@ = "Did not find closing tag" unless $@;
+	_failmsg "Did not find closing tag", pos $$textref unless $@;
 	pos($$textref) = $startpos;
 	return;
 }
@@ -404,21 +432,21 @@ sub _match_variable($$)
 	my $startpos = pos($$textref) = pos($$textref)||0;
 	unless ($$textref =~ m/\G($pre)/gc)
 	{
-		$@ = "Did not find prefix: /$pre/";
+		_failmsg "Did not find prefix: /$pre/", pos $$textref;
 		return;
 	}
 	my $varpos = pos($$textref);
 	unless ($$textref =~ m/\G(\$#?|[*\@\%]|\\&)+/gc)
 	{
-		$@ = "Did not find leading dereferencer";
+		_failmsg "Did not find leading dereferencer", pos $$textref;
 		pos $$textref = $startpos;
 		return;
 	}
 
-	unless ($$textref =~ m/\G\s*(?:::)?(?:[_a-z]\w*::)*[_a-z]\w*/gci
+	unless ($$textref =~ m/\G\s*(?:::|')?(?:[_a-z]\w*(?:::|'))*[_a-z]\w*/gci
 		or _match_codeblock($textref, "", '\{', '\}', '\{', '\}', 0))
 	{
-		$@ = "Bad identifier after dereferencer";
+		_failmsg "Bad identifier after dereferencer", pos $$textref;
 		pos $$textref = $startpos;
 		return;
 	}
@@ -480,17 +508,19 @@ sub _match_codeblock($$$$$$$)
 	my $startpos = pos($$textref) = pos($$textref) || 0;
 	unless ($$textref =~ m/\G($pre)/gc)
 	{
-		$@ = qq{Did not match prefix /$pre/ at"} .
-		       substr($$textref,pos($$textref),20) .
-		       q{..."};
+		_failmsg qq{Did not match prefix /$pre/ at"} .
+			    substr($$textref,pos($$textref),20) .
+			    q{..."},
+		         pos $$textref;
 		return; 
 	}
 	my $codepos = pos($$textref);
 	unless ($$textref =~ m/\G($ldel_outer)/gc)	# OUTERMOST DELIMITER
 	{
-		$@ = qq{Did not find expected opening bracket at "} .
-		     substr($$textref,pos($$textref),20) .
-		     q{..."};
+		_failmsg qq{Did not find expected opening bracket at "} .
+			     substr($$textref,pos($$textref),20) .
+			     q{..."},
+		         pos $$textref;
 		pos $$textref = $startpos;
 		return;
 	}
@@ -517,9 +547,10 @@ sub _match_codeblock($$$$$$$)
 			unless ($matched = ($closing && $1 eq $closing) )
 			{
 				next if $1 eq '>';	# MIGHT BE A "LESS THAN"
-				$@ = q{Mismatched closing bracket at "} .
-				     substr($$textref,pos($$textref),20) .
-				     qq{...". Expected '$closing'};
+				_failmsg q{Mismatched closing bracket at "} .
+					     substr($$textref,pos($$textref),20) .
+					     qq{...". Expected '$closing'},
+					 pos $$textref;
 			}
 			last;
 		}
@@ -552,19 +583,22 @@ sub _match_codeblock($$$$$$$)
 
 		if ($$textref =~ m/\G\s*$ldel_outer/gc)
 		{
-			$@ = q{Improperly nested codeblock at "} .
-			     substr($$textref,pos($$textref),20) .
-			     q{..."};
+			_failmsg q{Improperly nested codeblock at "} .
+				     substr($$textref,pos($$textref),20) .
+				     q{..."},
+				 pos $$textref;
 			last;
 		}
 
 		$patvalid = 0;
 		$$textref =~ m/\G\s*(\w+|[-=>]>|.|\Z)/gc;
 	}
+	continue { $@ = undef }
 
 	unless ($matched)
 	{
-		$@ = 'No match found for opening bracket' unless $@;
+		_failmsg 'No match found for opening bracket', pos $$textref
+			unless $@;
 		return;
 	}
 
@@ -602,6 +636,7 @@ sub extract_quotelike (;$$)
 			@match[18,19],				# REMAINDER
 			@match[0,1],				# PREFIX
 			@match[2..17],				# THE BITS
+			@match[20,21],				# ANY FILLET?
 		       );
 };
 
@@ -617,9 +652,10 @@ sub _match_quotelike($$$$)	# ($textref, $prepat, $allow_raw_match)
 
 	unless ($$textref =~ m/\G($pre)/gc)
 	{
-		$@ = qq{Did not find prefix /$pre/ at "} .
-		     substr($$textref, pos($$textref), 20) .
-		     q{..."};
+		_failmsg qq{Did not find prefix /$pre/ at "} .
+			     substr($$textref, pos($$textref), 20) .
+			     q{..."},
+		         pos $$textref;
 		return; 
 	}
 	$oppos = pos($$textref);
@@ -632,9 +668,10 @@ sub _match_quotelike($$$$)	# ($textref, $prepat, $allow_raw_match)
 	{
 		unless ($$textref =~ m/ \Q$initial\E [^\\$initial]* (\\.[^\\$initial]*)* \Q$initial\E /gcx)
 		{
-			$@ = qq{Did not find closing delimiter to match '$initial' at "} .
-			     substr($$textref, $oppos, 20) .
-			     q{..."};
+			_failmsg qq{Did not find closing delimiter to match '$initial' at "} .
+				     substr($$textref, $oppos, 20) .
+				     q{..."},
+				 pos $$textref;
 			pos $$textref = $startpos;
 			return;
 		}
@@ -661,24 +698,67 @@ sub _match_quotelike($$$$)	# ($textref, $prepat, $allow_raw_match)
 		       );
 	}
 
-	unless ($$textref =~ m!\G(m|s|qq|qx|qw|q|qr|tr|y)\b(?=\s*\S)!gc)
+	unless ($$textref =~ m{\G((?:m|s|qq|qx|qw|q|qr|tr|y)\b(?=\s*\S)|<<)}gc)
 	{
-		$@ = q{No quotelike operator found after prefix at "} .
-		     substr($$textref, pos($$textref), 20) .
-		     q{..."};
+		_failmsg q{No quotelike operator found after prefix at "} .
+			     substr($$textref, pos($$textref), 20) .
+			     q{..."},
+		         pos $$textref;
 		pos $$textref = $startpos;
 		return;
 	}
 
 	my $op = $1;
 	$preld1pos = pos($$textref);
+	if ($op eq '<<') {
+		$ld1pos = pos($$textref);
+		my $label;
+		if ($$textref =~ m{\G([A-Za-z_]\w*)}gc) {
+			$label = $1;
+		}
+		elsif ($$textref =~ m{\G(['"`])([^\1\\]*(?:\\.[^\1\\]*)*)\1}gc) {
+			$label = $2;
+		}
+		else {
+			$label = "";
+		}
+		my $extrapos = pos($$textref);
+		$$textref =~ m{.*\n}gc;
+		$str1pos = pos($$textref);
+		unless ($$textref =~ m{.*?\n(?=$label\n)}gc) {
+			_failmsg qq{Missing here doc terminator ('$label') after "} .
+				     substr($$textref, $startpos, 20) .
+				     q{..."},
+				 pos $$textref;
+			pos $$textref = $startpos;
+			return;
+		}
+		$rd1pos = pos($$textref);
+		$$textref =~ m{$label\n}gc;
+		$ld2pos = pos($$textref);
+		return (
+			$startpos,	$oppos-$startpos,	# PREFIX
+			$oppos,		length($op),		# OPERATOR
+			$ld1pos,	$extrapos-$ld1pos,	# LEFT DEL
+			$str1pos,	$rd1pos-$str1pos,	# STR/PAT
+			$rd1pos,	$ld2pos-$rd1pos,	# RIGHT DEL
+			$ld2pos,	0,			# NO 2ND LDEL
+			$ld2pos,	0,                	# NO 2ND STR
+			$ld2pos,	0,	                # NO 2ND RDEL
+			$ld2pos,	0,                      # NO MODIFIERS
+			$ld2pos,	$textlen-$ld2pos,	# REMAINDER
+			$extrapos,      $str1pos-$extrapos,	# FILLETED BIT
+		       );
+	}
+
 	$$textref =~ m/\G\s*/gc;
 	$ld1pos = pos($$textref);
 	$str1pos = $ld1pos+1;
 
 	unless ($$textref =~ m/\G(\S)/gc)	# SHOULD USE LOOKAHEAD
 	{
-		$@ = "No block delimiter found after quotelike $op";
+		_failmsg "No block delimiter found after quotelike $op",
+		         pos $$textref;
 		pos $$textref = $startpos;
 		return;
 	}
@@ -705,7 +785,8 @@ sub _match_quotelike($$$$)	# ($textref, $prepat, $allow_raw_match)
 		{
 			unless ($$textref =~ /\G\s*(\S)/gc)	# SHOULD USE LOOKAHEAD
 			{
-				$@ = "Missing second block for quotelike $op";
+				_failmsg "Missing second block for quotelike $op",
+					 pos $$textref;
 				pos $$textref = $startpos;
 				return;
 			}
@@ -742,7 +823,7 @@ sub _match_quotelike($$$$)	# ($textref, $prepat, $allow_raw_match)
 	my $endpos = pos $$textref;
 
 	return (
-		$startpos,	$startpos-$oppos,	# PREFIX
+		$startpos,	$oppos-$startpos,	# PREFIX
 		$oppos,		length($op),		# OPERATOR
 		$ld1pos,	1,			# LEFT DEL
 		$str1pos,	$rd1pos-$str1pos,	# STR/PAT
@@ -904,5 +985,9 @@ sub extract($$)	# ($self, $text)
 {
 	&{$_[0]}($_[1]);
 }
+
+package Text::Balanced::ErrorMsg;
+
+use overload '""' => sub { "$_[0]->{error}, detected at offset $_[0]->{pos}" };
 
 1;
