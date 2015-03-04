@@ -583,7 +583,7 @@ will be extracted as if it were:
 		(?i)		# CASE INSENSITIVE
 		[a-z_]		# LEADING ALPHABETIC/'
 
-This behaviour is identical to that of the Perl 5.004 interpreter.
+This behaviour is identical to that of the actual compiler.
 
 C<extract_quotelike> takes two arguments: the text to be processed and
 a prefix to be matched at the very beginning of the text. If no prefix 

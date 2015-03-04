@@ -220,3 +220,8 @@ Revision history for Perl extension Text::Balanced.
 	- Added handling of here docs (see documentation for limitations)
 
 	- Added reporting of failure position via $@->{pos} (see documentation)
+
+
+1.83	Mon Jan 15 12:43:12 2001
+
+	- Fixed numerous bugs in here doc extraction (many thanks Tim)

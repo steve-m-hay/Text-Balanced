@@ -7,7 +7,7 @@
 # Change 1..1 below to 1..last_test_to_print .
 # (It may become useful if the test is moved to ./t subdirectory.)
 
-BEGIN { $| = 1; print "1..87\n"; }
+BEGIN { $| = 1; print "1..89\n"; }
 END {print "not ok 1\n" unless $loaded;}
 use Text::Balanced qw ( extract_quotelike );
 $loaded = 1;
@@ -66,9 +66,10 @@ __DATA__
 
 
 <<EOHERE; done();\nline1\nline2\nEOHERE\n; next;
+     <<EOHERE; done();\nline1\nline2\nEOHERE\n; next;
 <<"EOHERE"; done()\nline1\nline2\nEOHERE\n and next
 <<`EOHERE`; done()\nline1\nline2\nEOHERE\n and next
-<<'EOHERE'; done()\nline1\nline2\nEOHERE\n and next
+<<'EOHERE'; done()\nline1\n'line2'\nEOHERE\n and next
 <<'EOHERE;'; done()\nline1\nline2\nEOHERE;\n and next
 <<"   EOHERE"; done() \nline1\nline2\n   EOHERE\nand next
 <<""; done()\nline1\nline2\n\n and next

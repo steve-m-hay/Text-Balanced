@@ -10,7 +10,7 @@ use Exporter;
 use SelfLoader;
 use vars qw { $VERSION @ISA %EXPORT_TAGS };
 
-$VERSION = '1.82';
+$VERSION = '1.83';
 @ISA		= qw ( Exporter );
 		     
 %EXPORT_TAGS	= ( ALL => [ qw(
@@ -57,6 +57,7 @@ sub _succeed
 	$@ = undef;
 	my ($wantarray,$textref) = splice @_, 0, 2;
 	my ($extrapos, $extralen) = @_>18 ? splice(@_, -2, 2) : (0,0);
+	my ($startlen) = $_[5];
 	my $remainderpos = $_[2];
 	if ($wantarray)
 	{
@@ -66,7 +67,7 @@ sub _succeed
 			push @res, substr($$textref,$from,$len);
 		}
 		if ($extralen) {	# CORRECT FILLET
-			my $extra = substr($res[0], $extrapos, $extralen, "\n");
+			my $extra = substr($res[0], $extrapos-$startlen, $extralen, "\n");
 			$res[1] = "$extra$res[1]";
 			eval { substr($$textref,$remainderpos,0) = $extra;
 			       substr($$textref,$extrapos,$extralen,"\n")} ;
@@ -81,7 +82,7 @@ sub _succeed
 	else
 	{
 		my $match = substr($$textref,$_[0],$_[1]);
-		substr($match,$extrapos-$_[0],$extralen,"") if $extralen;
+		substr($match,$extrapos-$_[0]-$startlen,$extralen,"") if $extralen;
 		my $extra = $extralen
 			? substr($$textref, $extrapos, $extralen)."\n" : "";
 		eval {substr($$textref,$_[4],$_[1]+$_[5])=$extra} ;	#CHOP OUT PREFIX & MATCH, IF POSSIBLE
@@ -716,8 +717,11 @@ sub _match_quotelike($$$$)	# ($textref, $prepat, $allow_raw_match)
 		if ($$textref =~ m{\G([A-Za-z_]\w*)}gc) {
 			$label = $1;
 		}
-		elsif ($$textref =~ m{\G(['"`])([^\1\\]*(?:\\.[^\1\\]*)*)\1}gc) {
-			$label = $2;
+		elsif ($$textref =~ m{ \G ' ([^'\\]* (?:\\.[^'\\]*)*) '
+				     | \G " ([^"\\]* (?:\\.[^"\\]*)*) "
+				     | \G ` ([^`\\]* (?:\\.[^`\\]*)*) `
+				     }gcx) {
+			$label = $+;
 		}
 		else {
 			$label = "";

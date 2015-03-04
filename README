@@ -1,5 +1,5 @@
 ==============================================================================
-                  Release of version 1.82 of Text::Balanced
+                  Release of version 1.83 of Text::Balanced
 ==============================================================================
 
 
@@ -66,20 +66,9 @@ COPYRIGHT
 
 ==============================================================================
 
-CHANGES IN VERSION 1.82
+CHANGES IN VERSION 1.83
 
-
-	- Fixed nit in extract_variable.t
-	  (tested more cases than it promised to)
-
-	- Fixed bug extracting prefix in extract_quotelike (Thanks Michael)
-
-	- Added handling of Perl 4 package qualifier: $Package'var, etc.
-
-	- Added handling of here docs (see documentation for limitations)
-
-	- Added reporting of failure position via $@->{pos} (see documentation)
-
+(No changes have been documented for this version)
 
 ==============================================================================
 
