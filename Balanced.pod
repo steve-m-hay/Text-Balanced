@@ -50,8 +50,8 @@ delimiters) , the remainder of the input string, the skipped prefix.
 Note that the original input text (the first argument) is not modified
 in any way.
 
-In a scalar context, just the extracted string is returned (again, the
-input text is not modified).
+In a scalar context, the extracted string is returned, having first been
+removed from the input text.
 
 In a void context, the input text has the extracted string (and any
 specified prefix) removed from it.
@@ -102,12 +102,13 @@ Examples:
 
 	# Remove a single-quoted substring from the very beginning of $text:
 
-		($substring,$text) = extract_delimited($text, "'", '');
+		$substring = extract_delimited($text, "'", '');
 
 	# Extract a single- or double- quoted substring from the
-	# beginning of $text, optionally after some whitespace:
+	# beginning of $text, optionally after some whitespace
+	# (note the list context to protect $text from modification):
 
-		$substring = extract_delimited $text, q{"'};
+		($substring) = extract_delimited $text, q{"'};
 
 
 	# Delete the substring delimited by the first '/' in $text:
@@ -189,7 +190,7 @@ However, the call in:
 
 would fail, returning:
 
-	( "" , "{ an '[irregularly :-(] {} parenthesized >:-)' string }" , "" );
+	( undef , "{ an '[irregularly :-(] {} parenthesized >:-)' string }"  );
 
 because the embedded pairs of C<'(..)'>s and C<'[..]'>s are "cross-nested" and
 the embedded C<'E<gt>'> is unbalanced. (In a scalar context, this call would
@@ -208,23 +209,17 @@ C<extract_quotelike> attempts to recognize, extract, and segment any
 one of the various Perl quotes and quotelike operators (see
 L<perlop(3)>) Nested backslashed delimiters, embedded balanced bracket
 delimiters (for the quotelike operators), and trailing modifiers are
-all caught. For example:
+all caught. For example, in:
 
-	'q # a literal octothorpe: \# (not the end of the q!) #'
+	extract_quotelike 'q # an octothorpe: \# (not the end of the q!) #'
 	
-	'  "You said, \"Use sed\"."  '
+	extract_quotelike '  "You said, \"Use sed\"."  '
 
-	' s{([A-Z]{1,8}\.[A-Z]{3})} /\L$1\E/; '
+	extract_quotelike ' s{([A-Z]{1,8}\.[A-Z]{3})} /\L$1\E/; '
 
-	' tr/\\\/\\\\/\\\//ds; '
+	extract_quotelike ' tr/\\\/\\\\/\\\//ds; '
 
-are all extracted correctly.
-
-Note however that C<extract_quotelike> I<does not recognize> the vaguely
-deprecated C<?....?> pattern match operator. This is not because it is
-frowned upon, but simply because it is not obvious how to distinguish
-from the ternary operator (C<?:>), without deciphering the entire Perl
-semantics of the processed text [suggestions are welcome].
+the full Perl quotelike operations are all extracted correctly.
 
 Note too that, when using the /x modifier on a regex, any comment
 containing the current pattern delimiter will cause the regex to be
@@ -309,13 +304,13 @@ For each of the fields marked "(if any)" the default value is
 an empty string.
 
 In a scalar context, C<extract_quotelike> returns just the complete substring
-which matched a quotelike operation (or C<undef> on failure). In a void
-context, the input text has the same substring (and any specified
+which matched a quotelike operation (or C<undef> on failure). In a scalar or
+void context, the input text has the same substring (and any specified
 prefix) removed.
 
 Examples:
 
-	# Extract the first quotelike literal that appears in text
+	# Remove the first quotelike literal that appears in text
 
 		$quotelike = extract_quotelike($text,'.*?');
 
@@ -401,11 +396,13 @@ Examples:
 
 =head1 DIAGNOSTICS
 
-In a list context, all the functions return C<('',$original_text,'')>
-on failure. In a scalar context, failure is indicated by returning C<undef>.
+In a list context, all the functions return C<(undef,$original_text)>
+on failure. In a scalar context, failure is indicated by returning C<undef>
+(in this case the input text is not modified in any way).
 
 In addition, on failure in I<any> context, one of the following explanatory
-diagnostic messages is returned in the standard C<$@> variable:
+diagnostic messages is returned in the standard C<$@> variable (on success the
+C<$@> variable is guaranteed to be C<undef>):
 
 =over 4
 
@@ -479,10 +476,8 @@ Damian Conway (damian@cs.monash.edu.au)
 =head1 BUGS AND IRRITATIONS
 
 There are undoubtedly serious bugs lurking somewhere in this code, if
-only because it gives the impression of understanding a great deal
-more about Perl than it really does. Remember in particular, that
-neither C<extract_quotelike> nor C<extract_codeblock> honour ( or even
-know about) C<?...?> patterns.
+only because parts of it give the impression of understanding a great deal
+more about Perl than they really do. 
 
 Bug reports and other feedback are most welcome.
 

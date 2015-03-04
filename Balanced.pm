@@ -6,16 +6,20 @@ use strict;
 package Text::Balanced;
 
 use Exporter;
-use vars qw { $VERSION @ISA @EXPORT_OK };
+use vars qw { $VERSION @ISA %EXPORT_TAGS };
 
-$VERSION	= 1.23;
+$VERSION	= 1.24;
 @ISA		= qw ( Exporter );
-@EXPORT_OK	= qw (
-			&extract_delimited
-			&extract_bracketed
-			&extract_quotelike
-			&extract_codeblock
-		     );
+		     
+%EXPORT_TAGS	= ( ALL => [ qw(
+				&extract_delimited
+				&extract_bracketed
+				&extract_quotelike
+				&extract_codeblock
+				&extract_variable
+			       ) ] );
+
+Exporter::export_ok_tags('ALL');
 
 # PAY NO ATTENTION TO THE TRACE BEHIND THE CURTAIN
 # sub _trace($) { print $_[0], "\n" if defined $Balanced::TRACE; }
@@ -23,20 +27,21 @@ sub _trace($) {}
 
 # HANDLE RETURN VALUES IN VARIOUS CONTEXTS
 
-sub _fail ($@)
+sub _fail
 {
 	my $wantarray = shift;
 	return @_ if $wantarray;
 	return undef;
 }
 
-sub _succeed ($$@)
+sub _succeed
 {
+	$@ = undef;
 	my $wantarray = shift;
 	return @_[1..$#_]	if $wantarray;
+	$_[0] = $_[2];		# MODIFY 1ST ARG IN NON-LIST CONTEXTS
 	return $_[1]	 	if defined $wantarray;
-	$_[0] = $_[2];		# !defined $wantarray
-	return undef;
+	return undef;		# VOID CONTEXT
 }
 
 # THE EXTRACTION FUNCTIONS
@@ -44,11 +49,11 @@ sub _succeed ($$@)
 sub extract_delimited (;$$$)
 {
 	my $text = defined $_[0] ? $_[0] : $_;
-	my @fail = (wantarray,'',$text,'');
+	my @fail = (wantarray,undef,$text);
 	my $del  = defined $_[1] ? $_[1] : q{'"`};
 	my $pre  = defined $_[2] ? $_[2] : '\s*';
 	eval "'' =~ /$pre/; 1" or return _fail @fail;
-	return _succeed (wantarray,$_[0]||$_,$2,$5,$1)
+	return _succeed (wantarray,(defined $_[0] ? $_[0] : $_),$2,$5,$1)
 		if $text =~ /\A($pre)(([$del])(\\\3|(?!\3).)*\3)(.*)/s;
 	$@ = "Could not extract \"$del\"-delimited substring";
 	return _fail @fail;
@@ -56,12 +61,11 @@ sub extract_delimited (;$$$)
 
 sub extract_bracketed (;$$$)
 {
-	$@ = '';
 	my $text = defined $_[0] ? $_[0] : defined $_ ? $_ : '';
 	my $orig = $text;
 	my $ldel = defined $_[1] ? $_[1] : '{([<';
 	my $pre  = defined $_[2] ? $_[2] : '\s*';
-	my @fail = (wantarray,'',$text,'');
+	my @fail = (wantarray,undef,$text);
 
 	unless ($text =~ s/\A($pre)//s)
 		{ $@ = "Did not find prefix: /$pre/"; return _fail @fail; }
@@ -110,9 +114,36 @@ sub extract_bracketed (;$$$)
 		     . join("..",@nesting)."..";
 		  return _fail @fail; }
 	my $prelen = length $pre;
-	return _succeed wantarray, $_[0]||$_, ( substr($orig,$prelen,length($orig)-length($text)-$prelen)
-	       , $text
-	       , $pre);
+	return _succeed wantarray,
+			(defined $_[0] ? $_[0] : $_),
+			substr($orig,$prelen,length($orig)-length($text)-$prelen),
+			$text,
+		        $pre;
+}
+
+sub extract_variable (;$$)
+{
+	my $text = defined $_[0] ? $_[0] : defined $_ ? $_ : '';
+	my $orig = $text;
+	my $pre  = defined $_[1] ? $_[1] : '\s*';
+	my @fail = (wantarray,undef,$text);
+	unless ($text =~ s/\A($pre)//s)
+		{ $@ = "Did not find prefix: /$pre/"; return _fail @fail; }
+	$pre = $1;
+	unless ($text =~ s/\A[\$\@\%]+//s)
+		{ $@ = "Did not find leading dereferencer";
+		  return _fail @fail; }
+
+	unless ($text =~ s/\A[_a-z]\w*//i  or extract_codeblock($text,'{}',''))
+		{ $@ = "Bad identifier after dereferencer";
+		  return _fail @fail; }
+	while ($text =~ s/\A[_a-z]\w*//i or extract_codeblock($text,'{}[]()','(?:->)?')) {}
+
+	return _succeed wantarray,
+			(defined $_[0] ? $_[0] : $_),
+			substr($orig,0,length($orig)-length($text)),
+			$text,
+			$pre;
 }
 
 sub extract_codeblock (;$$$)
@@ -127,8 +158,7 @@ sub extract_codeblock (;$$$)
 	$ldel = '('.join('|',map { quotemeta $_ } split('',$ldel)).')';
 	$rdel = '('.join('|',map { quotemeta $_ } split('',$rdel)).')';
 	_trace("Trying /$ldel/../$rdel/");
-	my @fail = (wantarray,'',$text,'');
-	$@ = '';
+	my @fail = (wantarray,undef,$text);
 	unless ($text =~ s/\A($pre)//s)
 		{ $@ = "Did not find prefix: /$pre/"; return _fail @fail; }
 	$pre = $1;
@@ -138,6 +168,7 @@ sub extract_codeblock (;$$$)
 	my $closing = $1;
 	   $closing =~ tr/([<{/)]>}/;
 	my $matched;
+	my $patvalid = 1;
 	while (length $text)
 	{
 		$matched = '';
@@ -153,12 +184,25 @@ sub extract_codeblock (;$$$)
 			last;
 		}
 
+		if ($text =~ s#\A\s*(=~|split|grep|map|return|;)##)
+		{
+			$patvalid = 1;
+			next;
+		}
+
+		if (extract_variable($text))
+		{
+			$patvalid = 0;
+			next;
+		}
+
 		if ($text =~ m#\A\s*(m|s|qq|qx|qw|q|tr|y)\b\s*\S#
-		 or $text =~ m#\A\s*["'`/]#)
+		 or $text =~ m#\A\s*["'`]#
+		 or $patvalid and $text =~ m#\A\s*[/?]#)
 		{
 			_trace("Trying quotelike at [".substr($text,0,30)."]");
 			($matched,$text) = extract_quotelike($text);
-			next if $matched;
+			if ($matched) { $patvalid = 0; next; }
 			_trace("...quotelike failed");
 		}
 
@@ -166,13 +210,14 @@ sub extract_codeblock (;$$$)
 		{
 			_trace("Trying codeblock at [".substr($text,0,30)."]");
 			($matched,$text) = extract_codeblock($text,$del);
-			next if $matched;
+			if ($matched) { $patvalid = 1; next; }
 			_trace("...codeblock failed");
 			$@ = "Nested codeblock failed to balance from \""
 				.  substr($text,0,10) . "...\"";
 			last;
 		}
 
+		$patvalid = 0;
 		$text =~ s/\s*(\w+|.)//s;
 		_trace("Skipping: [$1]");
 	}
@@ -182,14 +227,18 @@ sub extract_codeblock (;$$$)
 		$@ = 'No match found for opening bracket' unless $@;
 		return _fail @fail;
 	}
-	return _succeed wantarray, $_[0]||$_, (substr($orig,0,length($orig)-length($text)),$text,$pre);
+	return _succeed wantarray,
+			(defined $_[0] ? $_[0] : $_),
+			substr($orig,0,length($orig)-length($text)),
+			$text,
+			$pre;
 }
 
 sub extract_quotelike (;$$)
 {
 	my $text = $_[0] ? $_[0] : defined $_ ? $_ : '';
 	my $wantarray = wantarray;
-	my @fail = (wantarray,'',$text,'','','','','','','','','');
+	my @fail = (wantarray,undef,$text);
 	my $pre  = $_[1] ? $_[1] : '\s*';
 
 	my $ldel1  = '';
@@ -207,6 +256,8 @@ sub extract_quotelike (;$$)
 			'tr'	=> '[cds]*',
 			'y'	=> '[cds]*',
 			'qq'	=> '',
+			'qx'	=> '',
+			'qw'	=> '',
 			'q'	=> '',
 		     );
 
@@ -215,15 +266,18 @@ sub extract_quotelike (;$$)
 	$pre = $1;
 	my $orig = $text;
 
-	if ($text =~ m#\A([/"'`])#)
+	if ($text =~ m#\A([/?"'`])#)
 	{
 		$ldel1= $rdel1= $1;
 		my $matched;
 		($matched,$text) = extract_delimited($text, $ldel1);
 	        return _fail @fail unless $matched;
-		$text =~ s/\A($mods{none})// if ($ldel1 =~ m#[/]()#);
-		return _succeed wantarray, $_[0]||$_,
-		       ($matched.$1,$text,$pre,
+		my $mods = '';
+		if ($ldel1 =~ m#[/]()#) 
+			{ $text =~ s/\A($mods{none})// and $mods = $1; }
+		return _succeed wantarray,
+			(defined $_[0] ? $_[0] : $_),
+		       ($matched.$mods,$text,$pre,
 			'',					# OPERATOR
 			$ldel1,					# BLOCK 1 LEFT DELIM
 			substr($matched,1,length($matched)-2),	# BLOCK 1
@@ -231,7 +285,7 @@ sub extract_quotelike (;$$)
 			'',					# BLOCK 2 LEFT DELIM
 			'',					# BLOCK 2 
 			'',					# BLOCK 2 RIGHT DELIM
-			$1?$1:''				# MODIFIERS
+			$mods					# MODIFIERS
 			);
 	}
 
@@ -292,7 +346,8 @@ sub extract_quotelike (;$$)
 
 	$text =~ s/\A($mods{$quotelike})//;
 
-	return _succeed wantarray, $_[0]||$_,
+	return _succeed wantarray,
+			(defined $_[0] ? $_[0] : $_),
 	       		substr($orig,0,length($orig)-length($text)),
 			$text,
 			$pre,
