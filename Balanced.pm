@@ -8,7 +8,7 @@ package Text::Balanced;
 use Exporter;
 use vars qw { $VERSION @ISA %EXPORT_TAGS };
 
-$VERSION	= 1.24;
+$VERSION = '1.35';
 @ISA		= qw ( Exporter );
 		     
 %EXPORT_TAGS	= ( ALL => [ qw(
@@ -50,7 +50,7 @@ sub extract_delimited (;$$$)
 {
 	my $text = defined $_[0] ? $_[0] : $_;
 	my @fail = (wantarray,undef,$text);
-	my $del  = defined $_[1] ? $_[1] : q{'"`};
+	my $del  = defined $_[1] ? $_[1] : qq{\'\"\`};
 	my $pre  = defined $_[2] ? $_[2] : '\s*';
 	eval "'' =~ /$pre/; 1" or return _fail @fail;
 	return _succeed (wantarray,(defined $_[0] ? $_[0] : $_),$2,$5,$1)
@@ -134,10 +134,10 @@ sub extract_variable (;$$)
 		{ $@ = "Did not find leading dereferencer";
 		  return _fail @fail; }
 
-	unless ($text =~ s/\A[_a-z]\w*//i  or extract_codeblock($text,'{}',''))
+	unless ($text =~ s/\A((?:[a-z]\w*)?::)?[_a-z]\w*//i  or extract_codeblock($text,'{}',''))
 		{ $@ = "Bad identifier after dereferencer";
 		  return _fail @fail; }
-	while ($text =~ s/\A[_a-z]\w*//i or extract_codeblock($text,'{}[]()','(?:->)?')) {}
+	while ($text =~ s/\A((?:[a-z]\w*)?::)?[_a-z]\w*//i or extract_codeblock($text,'{}[]()','(?:->)?')) {}
 
 	return _succeed wantarray,
 			(defined $_[0] ? $_[0] : $_),
@@ -184,7 +184,7 @@ sub extract_codeblock (;$$$)
 			last;
 		}
 
-		if ($text =~ s#\A\s*(=~|split|grep|map|return|;)##)
+		if ($text =~ s!\A\s*(=~|split|grep|map|return|;)!!)
 		{
 			$patvalid = 1;
 			next;
@@ -196,9 +196,9 @@ sub extract_codeblock (;$$$)
 			next;
 		}
 
-		if ($text =~ m#\A\s*(m|s|qq|qx|qw|q|tr|y)\b\s*\S#
-		 or $text =~ m#\A\s*["'`]#
-		 or $patvalid and $text =~ m#\A\s*[/?]#)
+		if ($text =~ m!\A\s*(m|s|qq|qx|qw|q|tr|y)\b\s*\S!
+		 or $text =~ m!\A\s*[\"\'\`]!
+		 or $patvalid and $text =~ m!\A\s*[/?]!)
 		{
 			_trace("Trying quotelike at [".substr($text,0,30)."]");
 			($matched,$text) = extract_quotelike($text);
@@ -266,14 +266,14 @@ sub extract_quotelike (;$$)
 	$pre = $1;
 	my $orig = $text;
 
-	if ($text =~ m#\A([/?"'`])#)
+	if ($text =~ m!\A([/?\"\'\`])!)
 	{
 		$ldel1= $rdel1= $1;
 		my $matched;
 		($matched,$text) = extract_delimited($text, $ldel1);
 	        return _fail @fail unless $matched;
 		my $mods = '';
-		if ($ldel1 =~ m#[/]()#) 
+		if ($ldel1 =~ m![/]()!) 
 			{ $text =~ s/\A($mods{none})// and $mods = $1; }
 		return _succeed wantarray,
 			(defined $_[0] ? $_[0] : $_),
@@ -289,7 +289,7 @@ sub extract_quotelike (;$$)
 			);
 	}
 
-	unless ($text =~ s#\A(m|s|qq|qx|qw|q|tr|y)\b(?=\s*\S)##s)
+	unless ($text =~ s!\A(m|s|qq|qx|qw|q|tr|y)\b(?=\s*\S)!!s)
 	{
 		$@ = "No quotelike function found after prefix: \"$pre\"";
 		return _fail @fail

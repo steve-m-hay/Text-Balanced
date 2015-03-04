@@ -1,6 +1,6 @@
-use ExtUtils::MakeMaker;
 
+use ExtUtils::MakeMaker;
 WriteMakefile(
-    'NAME'	=> 'Text::Balanced',
-    'VERSION_FROM' => 'Balanced.pm', # finds $VERSION
-);
+		NAME	=> 'Text::Balanced',
+		VERSION => '1.35',
+	     );

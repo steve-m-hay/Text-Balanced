@@ -42,3 +42,9 @@ Revision history for Perl extension Text::Balanced.
 
 	- fixed serious bug with embedded division operators ("/")
 	  This now also allows the ?...? form of pattern matching!
+
+1.35	Wed Jun 24 09:53:31 1998
+
+	- fixed handling of :: quantifiers in extract_variable()
+
+	- numerous trivial lexical changes to make xemacs happy
