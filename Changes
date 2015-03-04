@@ -119,3 +119,18 @@ Revision history for Perl extension Text::Balanced.
 	- Fixed a bug with extract_codeblock in "RecDescent" mode
 	  (it would accept "subrule(s?)" and "subrule(?)", but
 	   not "subrule(s)"). Thanks, Jan.
+
+
+1.66	Fri Jul  2 13:29:22 1999
+
+	- Added ability to use quotelike operators in extract_bracketed
+
+	- Fixed bug under 5.003 ('foreach my $func' not understood)
+
+	- Added escape specification as fourth arg to &extract_delimited
+
+	- Fixed handling of &delimited_pat and &extract_delimited
+	  when delimiter is same as escape
+
+	- Fixed handling of ->, =>, and >> in &extract_code
+	  when delimiters are "<>"

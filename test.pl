@@ -6,13 +6,13 @@
 # Change 1..1 below to 1..last_test_to_print .
 # (It may become useful if the test is moved to ./t subdirectory.)
 
-BEGIN { $| = 1; print "1..61\n"; }
+BEGIN { $| = 1; print "1..65\n"; }
 END {print "not ok 1\n" unless $loaded;}
 use Text::Balanced qw ( :ALL );
 $loaded = 1;
 print "ok 1\n";
 $count=2;
-#sub debug { print "\t>>>",@_ }
+# sub debug { print "\t>>>",@_ }
 sub debug {}
 
 ######################### End of black magic.
@@ -51,6 +51,35 @@ while (defined($str = <DATA>))
 }
 
 __DATA__
+# USING: extract_codeblock($str,'<>');
+< %x = () >;
+< %x = ( try => "this") >;
+< %x = ( $try->{this}, "too") >;
+
+# USING: extract_delimited($str,'/#$',undef,'/#$');
+/a/;
+/a///;
+#b#;
+#b###;
+$c$;
+$c$$$;
+
+# TEST EXTRACTION OF DELIMITED TEXT WITH ESCAPES
+# USING: extract_delimited($str,'/#$',undef,'\\');
+/a/;
+/a\//;
+#b#;
+#b\##;
+$c$;
+$c\$$;
+
+# USING: extract_quotelike($str);
+# THESE SHOULD FAIL
+s<$self->{pat}>{$self->{sub}};
+s-$self->{pap}-$self->{sub}-;
+
+# USING: extract_bracketed($str,'<"`q>');
+<a q{uoted} ">" unbalanced right bracket of /(q>)/ either sort (`>>>""">>>>`) is okay >;
 
 # USING: use 5.005; extract_tagged($str,qr/<[A-Z]+>/,undef, undef, {ignore=>["<BR>"]});
 	<A>aaa<B>bbb<BR>ccc</B>ddd</A>;
@@ -143,6 +172,10 @@ $ a :: b :: c
 "b";
 `c`;
 'a\'';
+'a\\';
+'\\a';
+"a\\";
+"\\a";
 "b\'\"\'";
 `c '\`abc\`'`;
 

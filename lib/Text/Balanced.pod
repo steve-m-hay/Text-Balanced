@@ -116,17 +116,20 @@ but with C<extract_delimited> it can be simplified to:
 
 	($extracted,$remainder) = extract_delimited $text, "'";
 
-C<extract_delimited> takes up to three scalars (the input text, the
-delimiters, and a prefix to be skipped) and extracts the initial
-substring of the text that is appropriately delimited. If the
-delimiter string has multiple characters, the first one encountered in
-the text is taken to delimit the substring (the delimiters are simply
-interpolated into a regex character class, so care is needed with some
-pattern metacharacters). The third argument specifies a prefix pattern
-that is to be skipped (but must be present!) before the substring is
-extracted.
+C<extract_delimited> takes up to four scalars (the input text, the
+delimiters, a prefix pattern to be skipped, and any escape characters)
+and extracts the initial substring of the text that
+is appropriately delimited. If the delimiter string has multiple
+characters, the first one encountered in the text is taken to delimit
+the substring.
+The third argument specifies a prefix pattern that is to be skipped
+(but must be present!) before the substring is extracted.
+The final argument specifies the escape character to be used for each
+delimiter.
 
-All arguments are optional. If the prefix is not specified, the
+All arguments are optional. If the escape characters are not specified,
+every delimiter is escaped with a backslash (C<\>).
+If the prefix is not specified, the
 pattern C<'\s*'> - optional whitespace - is used. If the delimiter set
 is also not specified, the set C</["'`]/> is used. If the text to be processed
 is not specified either, C<$_> is used.
@@ -148,6 +151,12 @@ Examples:
 	# Remove a single-quoted substring from the very beginning of $text:
 
 		$substring = extract_delimited($text, "'", '');
+
+	# Remove a single-quoted Pascalish substring (i.e. one in which
+	# doubling the quote character escapes it) from the very
+	# beginning of $text:
+
+		$substring = extract_delimited($text, "'", '', "'");
 
 	# Extract a single- or double- quoted substring from the
 	# beginning of $text, optionally after some whitespace
@@ -268,10 +277,17 @@ the result would be:
 
 	( '<A HREF=">', '>>>">link</A>', "" )
 
-Note that only C<'>, C<">, and C<`> quoting can be specified with
-C<extract_bracketed>. Where embedded Perl quotelike operators (C<q{}>, etc.)
-must also be catered for, use C<"extract_quotelike"> and
-C<"extract_codeblock"> instead.
+In addition to the quote delimiters C<'>, C<">, and C<`>, full Perl quote-like
+quoting (i.e. q{string}, qq{string}, etc) can be specified by including the
+letter 'q' as a delimiter. Hence:
+
+	@result = extract_bracketed( $text, '<q>' );
+
+would correctly match something like this:
+
+	$text = '<leftop: conj /and/ conj>';
+
+See also: C<"extract_quotelike"> and C<"extract_codeblock">.
 
 
 =head2 C<extract_tagged>

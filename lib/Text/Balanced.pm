@@ -9,7 +9,7 @@ use Exporter;
 use SelfLoader;
 use vars qw { $VERSION @ISA %EXPORT_TAGS };
 
-$VERSION = '1.52';
+$VERSION = '1.66';
 @ISA		= qw ( Exporter );
 		     
 %EXPORT_TAGS	= ( ALL => [ qw(
@@ -58,14 +58,21 @@ sub delimited_pat($;$)  # ($delimiters;$escapes)
 	my ($dels, $escs) = @_;
 	return "" unless $dels =~ /\S/;
 	$escs = '\\' unless $escs;
+	$escs .= substr($escs,-1) x (length($dels)-length($escs));
 	my @pat = ();
 	my $i;
-	my $defesc = substr($escs,-1);
 	for ($i=0; $i<length $dels; $i++)
 	{
 		my $del = quotemeta substr($dels,$i,1);
-		my $esc = quotemeta (substr($escs||'',$i,1) || $defesc);
-		push @pat, "$del(?:[^$esc$del]*(?:$esc.[^$esc$del]*)*)$del";
+		my $esc = quotemeta substr($escs,$i,1);
+		if ($del eq $esc)
+		{
+			push @pat, "$del(?:[^$del]*(?:(?:$del$del)[^$del]*)*)$del";
+		}
+		else
+		{
+			push @pat, "$del(?:[^$esc$del]*(?:$esc.[^$esc$del]*)*)$del";
+		}
 	}
 	my $pat = join '|', @pat;
 	return "(?:$pat)";
@@ -74,15 +81,17 @@ sub delimited_pat($;$)  # ($delimiters;$escapes)
 
 # THE EXTRACTION FUNCTIONS
 
-sub extract_delimited (;$$$)
+sub extract_delimited (;$$$$)
 {
 	my $text = defined $_[0] ? $_[0] : $_;
 	my @fail = (wantarray,undef,$text);
 	my $del  = defined $_[1] ? $_[1] : qq{\'\"\`};
 	my $pre  = defined $_[2] ? $_[2] : '\s*';
+	my $esc  = defined $_[3] ? $_[3] : qq{\\};
 	eval "'' =~ /$pre/; 1" or return _fail @fail;
-	return _succeed (wantarray,(defined $_[0] ? $_[0] : $_),$2,$5,$1)
-		if $text =~ /\A($pre)(([$del])(\\\3|(?!\3).)*\3)(.*)/s;
+	my $pat = delimited_pat($del, $esc);
+	return _succeed (wantarray,(defined $_[0] ? $_[0] : $_),$2,$3,$1)
+		if $text =~ /\A($pre)($pat)(.*)/s;
 	$@ = "Could not extract \"$del\"-delimited substring";
 	return _fail @fail;
 }
@@ -100,9 +109,11 @@ sub extract_bracketed (;$$$)
 
 	$pre = $1;
 	my $qdel = "";
+	my $quotelike;
 	$ldel =~ s/'//g and $qdel .= q{'};
 	$ldel =~ s/"//g and $qdel .= q{"};
 	$ldel =~ s/`//g and $qdel .= q{`};
+	$ldel =~ s/q//g and $quotelike = 1;
 	$ldel =~ tr/[](){}<>\0-\377/[[(({{<</ds;
 	my $rdel = $ldel;
 
@@ -144,8 +155,12 @@ sub extract_bracketed (;$$$)
 			$@ = "Unmatched embedded quote ($1)";
 		        return _fail @fail;
 		}
+		elsif ($quotelike && extract_quotelike($text))
+		{
+			next;
+		}
 
-		else { $text =~ s/.//s }
+		else { $text =~ s/[a-zA-Z0-9]+|.//s }
 	}
 	if ($#nesting>=0)
 		{ $@ = "Unmatched opening bracket(s): "
@@ -297,7 +312,9 @@ sub extract_variable (;$$)
 	unless ($text =~ s/\A\s*(?:::)?(?:[_a-z]\w*::)*[_a-z]\w*//i  or extract_codeblock($text,'{}'))
 		{ $@ = "Bad identifier after dereferencer";
 		  return _fail @fail; }
-	1 while (extract_codeblock($text,'{}[]()','\s*(?:->)?\s*'));
+	1 while (  extract_codeblock($text,'{}[]()','\s*(?:->(?:\s*\w+\s*)?)?\s*')
+	        || extract_variable($text,'\s*->\s*')
+	        );
 
 	return _succeed wantarray,
 			(defined $_[0] ? $_[0] : $_),
@@ -390,7 +407,7 @@ sub extract_codeblock (;$$$$)
 		}
 
 		$patvalid = 0;
-		$text =~ s/\s*(\w+|.)//s;
+		$text =~ s/\s*(\w+|[-=>]>|.)//s;
 		_trace("Skipping: [$1]");
 	}
 
@@ -405,6 +422,18 @@ sub extract_codeblock (;$$$$)
 			$text,
 			$pre;
 }
+
+my %mods   = (
+		'none'	=> '[gimsox]*',
+		'm'	=> '[gimsox]*',
+		's'	=> '[egimsox]*',
+		'tr'	=> '[cds]*',
+		'y'	=> '[cds]*',
+		'qq'	=> '',
+		'qx'	=> '',
+		'qw'	=> '',
+		'q'	=> '',
+	     );
 
 sub extract_quotelike (;$$)
 {
@@ -421,17 +450,6 @@ sub extract_quotelike (;$$)
 	my $rdel2  = '';
 	my $mods   = '';
 
-	my %mods   = (
-			'none'	=> '[gimsox]*',
-			'm'	=> '[gimsox]*',
-			's'	=> '[egimsox]*',
-			'tr'	=> '[cds]*',
-			'y'	=> '[cds]*',
-			'qq'	=> '',
-			'qx'	=> '',
-			'qw'	=> '',
-			'q'	=> '',
-		     );
 
 	unless ($text =~ s/\A($pre)//s)
 		{ $@ = "Did not find prefix: /$pre/"; return _fail @fail; }
@@ -478,6 +496,7 @@ sub extract_quotelike (;$$)
 	{
 		$rdel1 =~ tr/[({</])}>/;
 		($block1,$text) = extract_bracketed($text,$ldel1);
+		# COULD BE ($block1,$text) = extract_codeblock($text,$ldel1);
 	}
 	else
 	{
@@ -507,6 +526,7 @@ sub extract_quotelike (;$$)
 		if ($ldel2 =~ /[[(<{]/)
 		{
 			($block2,$text) = extract_bracketed($text,$ldel2);
+			# COULD BE ($block2,$text) = extract_codeblock($text,$ldel2);
 		}
 		else
 		{
@@ -554,10 +574,11 @@ sub extract_multiple (;$$$$)	# ($text, $functions_ref, $max_fields, $ignoreunkno
 	my $unknown = "";
 	my $field = "";
 	my $remainder = "";
+	my $func;
 
 	FIELD: while ($text && @fields<$max-1)
 	{
-		foreach my $func ( @func )
+		foreach $func ( @func )
 		{
 			($field,$remainder) = &$func($text);
 			if ($field)
