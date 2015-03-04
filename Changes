@@ -57,3 +57,19 @@ Revision history for Perl extension Text::Balanced.
 	- Added undocumented fourth parameter to extract_codeblock
 	  so as to correctly handle (?) and (s?) modifiers in
 	  RecDescent grammars.
+
+
+1.40	Tue Aug  4 13:54:52 1998
+
+        - Added (optional) handling of embedded quoted text to
+          extract_delimited (see revised entry in Balanced.pod)
+
+        - Added extract_tagged which extracts text between arbitrary,
+          optionally nested start and end tags (see new entry in
+          Balanced.pod).
+
+        - Added delimited_pat which builds a pattern which matches a
+          string delimited by any of the delimiters specified (see new
+          entry in Balanced.pod).
+
+	- Added test.pl

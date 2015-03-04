@@ -8,21 +8,23 @@ package Text::Balanced;
 use Exporter;
 use vars qw { $VERSION @ISA %EXPORT_TAGS };
 
-$VERSION = '1.36';
+$VERSION = '1.40';
 @ISA		= qw ( Exporter );
 		     
 %EXPORT_TAGS	= ( ALL => [ qw(
+				&delimited_pat
 				&extract_delimited
 				&extract_bracketed
 				&extract_quotelike
 				&extract_codeblock
 				&extract_variable
+				&extract_tagged
 			       ) ] );
 
 Exporter::export_ok_tags('ALL');
 
 # PAY NO ATTENTION TO THE TRACE BEHIND THE CURTAIN
-# sub _trace($) { print $_[0], "\n" if defined $Balanced::TRACE; }
+# sub _trace($) { print $_[0], "\n"; }
 sub _trace($) {}
 
 # HANDLE RETURN VALUES IN VARIOUS CONTEXTS
@@ -43,6 +45,27 @@ sub _succeed
 	return $_[1]	 	if defined $wantarray;
 	return undef;		# VOID CONTEXT
 }
+
+# BUILD A PATTERN MATCHING A SIMPLE DELIMITED STRING
+
+sub delimited_pat($;$)  # ($delimiters;$escapes)
+{
+	my ($dels, $escs) = @_;
+	return "" unless $dels =~ /\S/;
+	$escs = '\\' unless $escs;
+	my @pat = ();
+	my $i;
+	my $defesc = substr($escs,-1);
+	for ($i=0; $i<length $dels; $i++)
+	{
+		my $del = quotemeta substr($dels,$i,1);
+		my $esc = quotemeta (substr($escs||'',$i,1) || $defesc);
+		push @pat, "$del(?:$esc$del|(?!$del).)*$del";
+	}
+	my $pat = join '|', @pat;
+	return "(?:$pat)";
+}
+
 
 # THE EXTRACTION FUNCTIONS
 
@@ -71,6 +94,10 @@ sub extract_bracketed (;$$$)
 		{ $@ = "Did not find prefix: /$pre/"; return _fail @fail; }
 
 	$pre = $1;
+	my $qdel = "";
+	$ldel =~ s/'//g and $qdel .= q{'};
+	$ldel =~ s/"//g and $qdel .= q{"};
+	$ldel =~ s/`//g and $qdel .= q{`};
 	$ldel =~ tr/[](){}<>\0-\377/[[(({{<</ds;
 	my $rdel = $ldel;
 
@@ -106,6 +133,12 @@ sub extract_bracketed (;$$$)
 			          return _fail @fail; }
 			last if $#nesting < 0;
 		}
+		elsif ($qdel && $text =~ m/\A([$qdel])/)
+		{
+			$text =~ s/\A([$1])(\\\1|(?!\1).)*\1//s and next;
+			$@ = "Unmatched embedded quote ($1)";
+		        return _fail @fail;
+		}
 
 		else { $text =~ s/.//s }
 	}
@@ -119,6 +152,124 @@ sub extract_bracketed (;$$$)
 			substr($orig,$prelen,length($orig)-length($text)-$prelen),
 			$text,
 		        $pre;
+}
+
+sub revbracket($)
+{
+	my $brack = reverse $_[0];
+	$brack =~ tr/[({</])}>/;
+	return $brack;
+}
+
+my $XMLNAME = q{[a-zA-Z_:][a-zA-Z_:.-]*};
+
+sub extract_tagged (;$$$$$)
+	   # ($text, $opentag, $closetag, $pre, \%options)
+{
+	my $text = defined $_[0] ? $_[0] : defined $_ ? $_ : '';
+	my $orig = $text;
+	my $ldel = $_[1];
+	my $rdel = $_[2];
+	my $pre  = defined $_[3] ? $_[3] : '\s*';
+	my %options = defined $_[4] ? %{$_[4]} : ();
+	my @bad  = defined $options{reject} ? @{$options{reject}} : ();
+	my @ignore  = defined $options{ignore} ? @{$options{ignore}} : ();
+	my $omode = defined $options{fail} ? $options{fail} : '';
+	my $bad  = join('|', @bad);
+	my $ignore  = join('|', @ignore);
+	my @fail = (wantarray,undef,$text);
+	$@ = undef;
+
+	unless ($text =~ s/\A($pre)//s)
+		{ $@ = "Did not find prefix: /$pre/"; return _fail @fail; }
+
+	$pre = $1;
+	my $prelen = length $pre;
+
+	if (!defined $ldel) { $ldel = '<\w+(?:' . delimited_pat(q{'"}) . '|[^>])*>'; }
+
+	unless ($text =~ s/\A($ldel)//s)
+		{ $@ = "Did not find opening tag: /$ldel/"; return _fail @fail; }
+
+	my $ldellen = length($1);
+	my $rdellen = 0;
+
+	if (!defined $rdel)
+	{
+		$rdel = $1;
+		unless ($rdel =~ s/\A([[(<{]+)($XMLNAME).*/ "$1\/$2". revbracket($1) /es)
+		{
+			$@ = "Unable to construct closing tag to match: /$ldel/";
+			return _fail @fail;
+		}
+	}
+
+	my ($nexttok, $fail);
+	while (length $text)
+	{
+		_trace("at: $text");
+		next if $text =~ s/\A\\.//s;
+
+		if ($text =~ s/\A($rdel)//s )
+		{
+			$rdellen = length $1;
+			goto matched;
+		}
+		elsif ($ignore && $text =~ s/\A(?:$ignore)//s)
+		{
+			next;
+		}
+		elsif ($bad && $text =~ m/\A($bad)/s)
+		{
+			goto short if ($omode eq 'PARA' || $omode eq 'MAX');
+			$@ = "Found invalid nested tag: $1";
+			return _fail @fail;
+		}
+		elsif ($text =~ m/\A($ldel)/s)
+		{
+			if (!defined extract_tagged($text, @_[1..$#_]))
+			{
+				goto short if ($omode eq 'PARA' || $omode eq 'MAX');
+				$@ = "Found unbalanced nested tag: $1";
+				return _fail @fail;
+			}
+		}
+		else { $text =~ s/.//s }
+	}
+
+short:
+	if ($omode eq 'PARA')
+	{
+		my $textlen = length($text);
+		my $init = ($textlen) ? substr($orig,0,-$textlen)
+				      : substr($orig,0);
+		$init =~ s/\A(.*?\n)([ \t]*\n.*)\Z/$1/s;
+		$text = ($2||'').$text;
+	}
+	elsif ($omode ne 'MAX')
+	{
+		goto failed;
+	}
+
+matched:
+	my $matched = substr($orig,$prelen,length($orig)-length($text)-$prelen);
+	_trace("extracted: $matched");
+	return _succeed wantarray,
+			(defined $_[0] ? $_[0] : $_),
+			$matched,
+			$text,
+			$pre,
+			substr($matched,0,$ldellen)||'',
+			($rdellen)
+				? substr($matched,$ldellen,-$rdellen)
+				: substr($matched,$ldellen),
+			($rdellen)
+				? substr($matched,-$rdellen)
+				: '';
+
+failed:
+	$@ = "Did not find closing tag" unless $@;
+	return _fail @fail;
 }
 
 sub extract_variable (;$$)

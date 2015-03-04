@@ -8,8 +8,12 @@ Text::Balanced - Extract delimited text sequences from strings.
  use Text::Balanced qw (
 			extract_delimited
 			extract_bracketed
+			extract_tagged
 			extract_quotelike
+			extract_variable
 			extract_codeblock
+
+			delimited_pat
 		       );
 
  # Extract the initial substring of $text which is delimited by
@@ -23,6 +27,19 @@ Text::Balanced - Extract delimited text sequences from strings.
  # in $delim contains one or more of '(){}[]<>').
 
 	($extracted, $remainder) = extract_bracketed($text,$delim);
+
+
+ # Extract the initial substring of $text which is bounded by
+ # an HTML/XML tag.
+
+	($extracted, $remainder) = extract_tagged($text);
+
+
+ # Extract the initial substring of $text which is bounded by
+ # a C<BEGIN>...C<END> pair. Don't allow nested C<BEGIN> tags
+
+	($extracted, $remainder) =
+		extract_tagged($text,"BEGIN","END",undef,{bad=>["BEGIN"]});
 
 
  # Extract the initial substring of $text which represents a
@@ -134,7 +151,7 @@ See L<"extract_quotelike"> for a (partial) solution to this problem.
 
 =head2 C<extract_bracketed>
 
-Like C<L<"extract_delimited">>, the C<extract_bracketed> function takes
+Like C<"extract_delimited">, the C<extract_bracketed> function takes
 up to three optional scalar arguments: a string to extract from, a delimiter
 specifier, and a prefix pattern. As before, a missing prefix defaults to
 optional whitespace and a missing text defaults to C<$_>. However, a missing
@@ -142,7 +159,8 @@ delimiter specifier defaults to C<'{}()[]E<lt>E<gt>'> (see below).
 
 C<extract_bracketed> extracts a balanced-bracket-delimited
 substring (using any one (or more) of the user-specified delimiter
-brackets: '(..)', '{..}', '[..]', or '<..>').
+brackets: '(..)', '{..}', '[..]', or '<..>'). Optionally it will also
+respect quoted unbalanced brackets (see below).
 
 A "delimiter bracket" is a bracket in list of delimiters passed as
 C<extract_bracketed>'s second argument. Delimiter brackets are
@@ -197,10 +215,182 @@ the embedded C<'E<gt>'> is unbalanced. (In a scalar context, this call would
 return an empty string. In a void context, C<$text> would be unchanged.)
 
 Note that the embedded single-quotes in the string don't help in this
-case, since they treated as non-delimiter characters and therefore
-ignored. See L<"extract_quotelike"> and L<"extract_codeblock">, which
-I<do> understand the nesting behaviour of the various species of Perl
-quotes.
+case, since they have not been specified as acceptable delimiters and are
+therefore treated as non-delimiter characters (and ignored).
+
+However, if a particular species of quote character is included in the
+delimiter specification, then that type of quote will be correctly handled.
+for example, if C<$text> is:
+
+	$text = '<A HREF=">>>>">link</A>';
+
+then
+
+	@result = extract_bracketed( $text, '<">' );
+
+returns:
+
+	( '<A HREF=">>>>">', 'link</A>', "" )
+
+as expected. Without the specification of C<"> as an embedded quoter:
+
+	@result = extract_bracketed( $text, '<>' );
+
+the result would be:
+
+	( '<A HREF=">', '>>>">link</A>', "" )
+
+Note that only C<'>, C<">, and C<`> quoting can be specified with
+C<extract_bracketed>. Where embedded Perl quotelike operators (C<q{}>, etc.)
+must also be catered for, use C<"extract_quotelike"> and
+C<"extract_codeblock"> instead.
+
+
+=head2 C<extract_tagged>
+
+C<extract_tagged> extracts and segments text between (balanced)
+specified tags. 
+
+The subroutine takes up to five optional arguments:
+
+=over 4
+
+=item 1.
+
+A string to be processed (C<$_> if the string is omitted or C<undef>)
+
+=item 2.
+
+A string specifying a pattern to be matched as the opening tag.
+If the pattern string is omitted (or C<undef>) then a pattern
+which matches any standard HTML/XML tag is used.
+
+=item 3.
+
+A string specifying a pattern to be matched at the closing tag. 
+If the pattern string is omitted (or C<undef>) then the closing
+tag is constructed by inserting a C</> after any leading bracket
+characters in the actual opening tag that was matched (I<not> the pattern
+that matched the tag). For example, if the opening tag pattern
+is specified as C<'{{\w+}}'> and actually matched the opening tag 
+C<"{{DATA}}">, then the constructed closing tag would be C<"{{/DATA}}">.
+
+=item 4.
+
+A string specifying a pattern to be matched as a prefix (which is to be
+skipped). If omitted, optional whitespace is skipped.
+
+=item 5.
+
+A hash reference containing various parsing options (see below)
+
+=back
+
+The various options which can be specified are:
+
+=over 4
+
+=item C<reject =E<gt> $listref>
+
+The list reference contains one or more strings specifying patterns
+which must I<not> appear within the tagged text.
+
+For example, to extract
+an HTML link (which should not contain nested links) use:
+
+	extract_tagged($text, '<A>', '</A>', undef, {reject => ['<A>']} );
+
+=item C<ignore =E<gt> $listref>
+
+The list reference contains one or more strings specifying patterns
+which are I<not> be be treated as nested tags within the tagged text
+(even if they would match the start tag pattern).
+
+For example, to extract an arbitrary XML tag, but ignore "empty" elements:
+
+	extract_tagged($text, undef, undef, undef, {ignore => ['<[^>]*/>']} );
+
+(also see L<"delimited_pat"> below).
+
+
+=item C<fail =E<gt> $str>
+
+The C<fail> option indicates the action to be taken if a matching end
+tag is not encountered (i.e. before the end of the string or some
+C<reject> pattern matches). By default, a failure to match a closing
+tag causes C<extract_tagged> to immediately fail.
+
+However, if the string value associated with <reject> is "MAX", then
+C<extract_tagged> returns the complete text up to the point of failure.
+If the string is "PARA", C<extract_tagged> returns only the first paragraph
+after the tag (up to the first line which is either empty or contains
+only whitespace characters).
+If the string is "", the the default behaviour (i.e. failure) is reinstated.
+
+For example, suppose the start tag "/para" introduces a paragraph, which then
+continues until the next "/endpara" tag or until another "/para" tag is
+encountered:
+
+	$text = "/para line 1\n\nline 3\n/para line 4";
+
+	extract_tagged($text, '/para', '/endpara', undef,
+				{reject => '/para', fail => MAX );
+
+	# EXTRACTED: "/para line 1\n\nline 3\n"
+
+Suppose instead, that if no matching "/endpara" tag is found, the "/para"
+tag refers only to the immediately following paragraph:
+
+	$text = "/para line 1\n\nline 3\n/para line 4";
+
+	extract_tagged($text, '/para', '/endpara', undef,
+			{reject => '/para', fail => MAX );
+
+	# EXTRACTED: "/para line 1\n"
+
+Note that the specified C<fail> behaviour applies to nested tags as well.
+
+=back
+
+On success in a list context, an array of 6 elements is returned. The elements are:
+
+=over 4
+
+=item [0]
+
+the extracted tagged substring (including the outermost tags),
+
+=item [1]
+
+the remainder of the input text,
+
+=item [2]
+
+the prefix substring (if any),
+
+=item [3]
+
+the opening tag
+
+=item [4]
+
+the text between the opening and closing tags
+
+=item [5]
+
+the closing tag (or "" if no closing tag was found)
+
+=back
+
+On failure, all of these values (except the remaining text) are C<undef>.
+
+In a scalar context, C<extract_tagged> returns just the complete
+substring which matched a tagged text (including the start and end
+tags). C<undef> is returned on failure. In addition, the original input
+text has the returned substring (and any prefix) removed from it.
+
+In a void context, the input text just has the matched substring (and
+any specified prefix) removed.
 
 
 =head2 C<extract_quotelike>
@@ -300,8 +490,10 @@ the trailing modifiers on the operation (if any).
 
 =back
 
-For each of the fields marked "(if any)" the default value is
+For each of the fields marked "(if any)" the default value on success is
 an empty string.
+On failure, all of these values (except the remaining text) are C<undef>.
+
 
 In a scalar context, C<extract_quotelike> returns just the complete substring
 which matched a quotelike operation (or C<undef> on failure). In a scalar or
@@ -338,8 +530,8 @@ Examples:
 C<extract_codeblock> attempts to recognize and extract a balanced
 bracket delimited substring which may contain unbalanced brackets
 inside Perl quotes or quotelike operations. That is, C<extract_codeblock>
-is like a combination of C<L<"extract_bracketed">> and
-C<L<"extract_quotelike">>.
+is like a combination of C<"extract_bracketed"> and
+C<"extract_quotelike">.
 
 C<extract_codeblock> takes the same three parameters as C<extract_bracketed>:
 a text to process, a set of delimiter brackets to look for, and a prefix to
@@ -393,6 +585,47 @@ Examples:
 
 		extract_codeblock $text, "(){}", '[^(]*';
 
+
+=head2 C<delimited_pat>
+
+The C<delimited_pat> subroutine takes a single (string) argument and
+builds a regex which matches a string delimited by any one of the
+characters in the single argument. For example:
+
+	delimited_pat(q{'"})
+
+returns the regex:
+
+	(?:\"(?:\\\"|(?!\").)*\"|\'(?:\\\'|(?!\').)*\')
+
+Note that the specified delimiters are automatically quotemeta'd.
+
+A typical use of C<delimited_pat> would be to build special purpose tags
+for C<extract_tagged>. For example, to properly ignore "empty" XML elements
+(which might contain quoted strings):
+
+	my $empty_tag = '<(' . delimited_pat(q{'"}) . '|.)+/>';
+
+	extract_tagged($text, undef, undef, undef, {ignore => [$empty_tag]} );
+
+
+C<delimited_pat> may also be called with an optional second argument,
+which specifies the "escape" character(s) to be used for each delimiter.
+For example to match a Pascal-style string (where ' is the delimiter
+and '' is a literal ' within the string):
+
+	delimited_pat(q{'},q{'});
+
+Different escape characters can be specified for different delimiters.
+For example, to specify that '/' is the escape for single quotes
+and '%' is the escape for double quotes:
+
+	delimited_pat(q{'"},q{/%});
+
+If more delimiters than escape chars are specified, the last escape char
+is used for the remaining delimiters.
+If no escape char is specified, '\' is used for all delimiters.
+	
 
 =head1 DIAGNOSTICS
 
@@ -464,6 +697,34 @@ quotelike operators C<s>, C<tr> or C<y> followed by only one block.
 
 A block within the substring being extracted by C<extract_codeblock> was
 incorrectly nested or had a unmatched delimiter in it.
+
+=item C<Did not find opening tag: /%s/>
+
+C<extract_tagged> did not find a suitable opening tag (after any specified
+prefix was removed).
+
+=item C<Unable to construct closing tag to match: /%s/>
+
+C<extract_tagged> matched the specified opening tag and tried to
+modify the matched text to produce a matching closing tag (because
+none was specified). It failed to generate the closing tag, almost
+certainly because the opening tag did not start with a
+bracket of some kind.
+
+=item C<Found invalid nested tag: %s>
+
+C<extract_tagged> found a nested tag which appeared in the "reject" list
+(and the failure mode was not "MAX" or "PARA").
+
+=item C<Found unbalanced nested tag: %s>
+
+C<extract_tagged> found a nested opening tag which was not matched by a
+corresponding nested closing tag (and the failure mode was not "MAX" or "PARA").
+
+=item C<Did not find closing tag>
+
+C<extract_tagged> reached the end of the text without finding a closing tag
+to match the original opening tag (and the failure mode was not "MAX" or "PARA").
 
 =back
 
