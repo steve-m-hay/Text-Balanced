@@ -1,5 +1,5 @@
 ==============================================================================
-                  Release of version 1.40 of Text::Balanced
+                  Release of version 1.41 of Text::Balanced
 ==============================================================================
 
 DESCRIPTION
@@ -39,6 +39,12 @@ SUMMARY (see Balanced.pod for full details)
         operations. That is, `extract_codeblock' is like a combination
         of `extract_bracketed' and `extract_quotelike'.
 
+    Text::Balanced::extract_tagged
+    
+        `extract_codetagged' attempts to recognize and extract a
+        substring between two arbitrary "tag" patterns (a start tag
+	and an end tag).
+
     
 INSTALLATION
 
@@ -61,21 +67,11 @@ COPYRIGHT
 
 ==============================================================================
 
-CHANGES IN VERSION 1.40
+CHANGES IN VERSION 1.41
 
 
-        - Added (optional) handling of embedded quoted text to
-          extract_delimited (see revised entry in Balanced.pod)
-
-        - Added extract_tagged which extracts text between arbitrary,
-          optionally nested start and end tags (see new entry in
-          Balanced.pod).
-
-        - Added delimited_pat which builds a pattern which matches a
-          string delimited by any of the delimiters specified (see new
-          entry in Balanced.pod).
-
-	- Added test.pl
+	- Reinstated change to extract_codeblock from 1.36 which were
+	  mysteriously lost in 1.40
 
 
 ==============================================================================

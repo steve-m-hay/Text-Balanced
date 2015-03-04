@@ -73,3 +73,9 @@ Revision history for Perl extension Text::Balanced.
           entry in Balanced.pod).
 
 	- Added test.pl
+
+
+1.41	Mon Aug 10 14:51:50 1998
+
+	- Reinstated change to extract_codeblock from 1.36 which were
+	  mysteriously lost in 1.40

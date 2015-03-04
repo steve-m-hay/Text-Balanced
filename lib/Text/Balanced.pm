@@ -8,7 +8,7 @@ package Text::Balanced;
 use Exporter;
 use vars qw { $VERSION @ISA %EXPORT_TAGS };
 
-$VERSION = '1.40';
+$VERSION = '1.41';
 @ISA		= qw ( Exporter );
 		     
 %EXPORT_TAGS	= ( ALL => [ qw(
@@ -297,12 +297,13 @@ sub extract_variable (;$$)
 			$pre;
 }
 
-sub extract_codeblock (;$$$)
+sub extract_codeblock (;$$$$)
 {
 	my $text = defined $_[0] ? $_[0] : defined $_ ? $_ : '';
 	my $orig = $text;
 	my $del  = defined $_[1] ? $_[1] : '{';
 	my $pre  = defined $_[2] ? $_[2] : '\s*';
+	my $rd   = $_[3];
 	my ($ldel, $rdel) = ($del, $del);
 	$ldel =~ tr/[]()<>{}\0-\377/[[((<<{{/ds;
 	$rdel =~ tr/[]()<>{}\0-\377/]]))>>}}/ds;
@@ -323,6 +324,11 @@ sub extract_codeblock (;$$$)
 	while (length $text)
 	{
 		$matched = '';
+		if ($rd && $text =~ s#\A(\Q(?)\E|\Q(s?)\E)##)
+		{
+			$patvalid = 0;
+			next;
+		}
 		if ($text =~ s/\A\s*$rdel//)
 		{
 			$matched = ($1 eq $closing);
@@ -360,7 +366,7 @@ sub extract_codeblock (;$$$)
 		if ($text =~ m/\A\s*$ldel/)
 		{
 			_trace("Trying codeblock at [".substr($text,0,30)."]");
-			($matched,$text) = extract_codeblock($text,$del);
+			($matched,$text) = extract_codeblock($text,$del,undef,$rd);
 			if ($matched) { $patvalid = 1; next; }
 			_trace("...codeblock failed");
 			$@ = "Nested codeblock failed to balance from \""

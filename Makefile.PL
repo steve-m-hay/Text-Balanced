@@ -2,5 +2,5 @@
 use ExtUtils::MakeMaker;
 WriteMakefile(
 		NAME	=> 'Text::Balanced',
-		VERSION => '1.40',
+		VERSION => '1.41',
 	     );
