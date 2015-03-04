@@ -8,7 +8,7 @@ package Text::Balanced;
 use Exporter;
 use vars qw { $VERSION @ISA @EXPORT_OK };
 
-$VERSION	= 1.01;
+$VERSION	= 1.10;
 @ISA		= qw ( Exporter );
 @EXPORT_OK	= qw (
 			&extract_delimited
@@ -168,22 +168,49 @@ sub extract_codeblock (;$$$)
 sub extract_quotelike (;$$)
 {
 	my $text = $_[0] ? $_[0] : defined $_ ? $_ : '';
-	my @fail = ('',$text,'');
-	my $orig = $text;
+	my @fail = ('',$text,'','','','','','','','','');
 	my $pre  = $_[1] ? $_[1] : '\s*';
+
+	my $ldel1  = '';
+	my $block1 = '';
+	my $rdel1  = '';
+	my $ldel2  = '';
+	my $block2 = '';
+	my $rdel2  = '';
+	my $mods   = '';
+
+	my %mods   = (
+			''	=> '[gimsox]',
+			'm'	=> '[gimsox]',
+			's'	=> '[egimsox]',
+			'tr'	=> '[cds]',
+			'y'	=> '[cds]',
+			'qq'	=> '',
+			'q'	=> '',
+		     );
 
 	unless ($text =~ s/\A($pre)//s)
 		{ $@ = "Did not find prefix: /$pre/"; return @fail; }
 	$pre = $1;
+	my $orig = $text;
 
 	if ($text =~ m#\A([/"'`])#)
 	{
-		my $delim = $1;
+		$ldel1= $rdel1= $1;
 		my $matched;
-		($matched,$text) = extract_delimited($text, $delim);
+		($matched,$text) = extract_delimited($text, $ldel1);
 	        return @fail unless $matched;
-		if ($delim =~ m#[/]()#) { $text =~ s/(\s*[cdegimosx]*|)// }
-		return ($matched.$1,$text,$pre);
+		if ($ldel1 =~ m#[/]()#) { $text =~ s/(\s*($mods{''}*))// }
+		return ($matched.$1,$text,$pre,
+			'',					# OPERATOR
+			$ldel1,					# BLOCK 1 LEFT DELIM
+			substr($matched,1,length($matched)-2),	# BLOCK 1
+			$rdel1,					# BLOCK 1 RIGHT DELIM
+			'',					# BLOCK 2 LEFT DELIM
+			'',					# BLOCK 2 
+			'',					# BLOCK 2 RIGHT DELIM
+			$2?$2:''				# MODIFIERS
+			);
 	}
 
 	unless ($text =~ s#\A(m|s|qq|qx|qw|q|tr|y)\b(?=\s*\S)##s)
@@ -198,40 +225,61 @@ sub extract_quotelike (;$$)
 		$@ = "No block delimiter found after quotelike $quotelike";
 		return @fail;
 	}
-	my $delim = $1;
-	my $block;
-	if ($delim =~ /[[(<{]/)
+	$ldel1= $rdel1= $1;
+	if ($ldel1 =~ /[[(<{]/)
 	{
-		($block,$text) = extract_bracketed($text,$delim);
+		$rdel1 =~ tr/[({</])}>/;
+		($block1,$text) = extract_bracketed($text,$ldel1);
 	}
 	else
 	{
-		($block,$text) = extract_delimited($text,$delim);
+		($block1,$text) = extract_delimited($text,$ldel1);
 	}
-	return @fail if !$block;
+	return @fail if !$block1;
+	$block1 =~ s/.(.*)./$1/s;
+
 	if ($quotelike =~ /s|tr|y/)
 	{
-		if ($delim =~ /[[(<{]/)
+		if ($ldel1 =~ /[[(<{]/)
 		{
 			unless ($text =~ /\A\s*(\S)/)
 			{
 				$@ = "Missing second block for quotelike $quotelike";
 				return @fail;
 			}
-			$delim = $1;
-			($block,$text) = extract_bracketed($text,$delim);
+			$ldel2= $rdel2= $1;
+			$rdel2 =~ tr/[({</])}>/;
 		}
 		else
 		{
-			($block,$text) = extract_delimited($delim.$text,$delim);
+			$ldel2= $rdel2= $ldel1;
+			$text = $ldel2.$text;
 		}
-		return @fail if !$block;
+
+		if ($ldel2 =~ /[[(<{]/)
+		{
+			($block2,$text) = extract_bracketed($text,$ldel2);
+		}
+		else
+		{
+			($block2,$text) = extract_delimited($text,$ldel2);
+		}
+		return @fail if !$block2;
 	}
+	$block2 =~ s/.(.*)./$1/s;
 
-	$text =~ s/\s*[cdegimosx]*//;
+	$text =~ s/\A\s*($mods{$quotelike}*)//;
 
-	return (substr($orig,0,length($orig)-length($text)-length($pre))
-	       ,$text,$pre);
+	return (substr($orig,0,length($orig)-length($text)),$text,$pre,
+		$quotelike,	# OPERATOR
+		$ldel1,		
+		$block1,
+		$rdel1,
+		$ldel2,		
+		$block2,
+		$rdel2,
+		$1?$1:''	# MODIFIERS
+		);
 }
 
 1;

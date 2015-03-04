@@ -46,7 +46,7 @@ Text::Balanced - Extract delimited text sequences from strings.
 The C<extract_delimited> function formalizes the common idiom
 of extracting a single-character-delimited substring from the start of
 a string. For example, to extract a single-quote delimited string, the
-following code is typical used:
+following code is typically used:
 
 	($remainder = $text) =~ s/\A('(\\'|[^'])*')//s;
 	$extracted = $1;
@@ -182,11 +182,11 @@ quotes.
 
 =head2 C<extract_quotelike>
 
-C<extract_quotelike> attempts to recognize and extract any one of
-the various Perl quotes and quotelike operators (see L<perlop(3)>)
-Nested backslashed delimiters, embedded balanced bracket delimiters
-(for the quotelike operators), and trailing modifiers are all caught.
-For example:
+C<extract_quotelike> attempts to recognize, extract, and segment any
+one of the various Perl quotes and quotelike operators (see
+L<perlop(3)>) Nested backslashed delimiters, embedded balanced bracket
+delimiters (for the quotelike operators), and trailing modifiers are
+all caught. For example:
 
 	'q # a literal octothorpe: \# (not the end of the q!) #'
 	
@@ -204,10 +204,87 @@ frowned upon, but simply because it is not obvious how to distinguish
 from the ternary operator (C<?:>), without deciphering the entire Perl
 semantics of the processed text [suggestions are welcome].
 
+Note too that, when using the /x modifier on a regex, any comment
+containing the current pattern delimiter will cause the regex to be
+immediately terminated. In other words:
+
+	'm /
+		(?i)		# CASE INSENSITIVE
+		[a-z_]		# LEADING ALPHABETIC/UNDERSCORE
+		[a-z0-9]*	# FOLLOWED BY ANY NUMBER OF ALPHANUMERICS
+	   /x'
+
+will be extracted as if it were:
+
+	'm /
+		(?i)		# CASE INSENSITIVE
+		[a-z_]		# LEADING ALPHABETIC/'
+
+This behaviour is identical to that of the Perl 5.004 interpreter.
+
 C<extract_quotelike> takes two arguments: the text to be processed and
 a prefix to be matched at the very beginning of the text. If no prefix 
 is specified, optional whitespace is the default. If no text is given,
 C<$_> is used.
+
+An array of 11 elements is returned. The elements are:
+
+=over 4
+
+=item [0]
+
+the extracted quotelike substring (including trailing modifiers),
+
+=item [1]
+
+the remainder of the input text,
+
+=item [2]
+
+the prefix substring (if any),
+
+=item [3]
+
+the name of the quotelike operator (if any),
+
+=item [4]
+
+the left delimiter of the first block of the operation,
+
+=item [5]
+
+the text of the first block of the operation
+(that is, the contents of
+a quote, the regex of a match or substitution or the target list of a
+translation),
+
+=item [6]
+
+the right delimiter of the first block of the operation,
+
+=item [7]
+
+the left delimiter of the second block of the operation
+(that is, if it is a C<s>, C<tr>, or C<y>),
+
+=item [8]
+
+the text of the second block of the operation 
+(that is, the replacement of a substitution or the translation list
+of a translation),
+
+=item [9]
+
+the right delimiter of the second block of the operation (if any),
+
+=item [10]
+
+the trailing modifiers on the operation (if any).
+
+=back
+
+For each of the fields marked "(if any)" the default value is
+an empty string.
 
 Examples:
 
@@ -221,6 +298,18 @@ Examples:
 
 		do { $_ = join '<QLL>', (extract_quotelike)[2,1] } until $@;
 
+
+	# Isolate the search pattern in a quotelike operation from $text
+
+		($op,$pat) = (extract_quotelike $text)[3,5];
+		if ($op =~ /[ms]/)
+		{
+			print "search pattern: $pat\n";
+		}
+		else
+		{
+			print "$op is not a pattern matching operation\n";
+		}
 
 =head2 C<extract_codeblock>
 

@@ -6,3 +6,6 @@ Revision history for Perl extension Text::Balanced.
 1.01  Mon Sep  8 18:09:18 EST 1997
 	- changed "quotemeta" to "quotemeta $_" to work 
 	  arounf bug in Perl 5.002 and 5.003
+
+1.10  Tue Sep 30 17:23:23 EST 1997
+	- reworked extract_quotelike to correct handling of some obscure cases
