@@ -8,7 +8,7 @@ package Text::Balanced;
 use Exporter;
 use vars qw { $VERSION @ISA @EXPORT_OK };
 
-$VERSION	= 1.10;
+$VERSION	= 1.20;
 @ISA		= qw ( Exporter );
 @EXPORT_OK	= qw (
 			&extract_delimited
@@ -180,7 +180,7 @@ sub extract_quotelike (;$$)
 	my $mods   = '';
 
 	my %mods   = (
-			''	=> '[gimsox]',
+			'none'	=> '[gimsox]',
 			'm'	=> '[gimsox]',
 			's'	=> '[egimsox]',
 			'tr'	=> '[cds]',
@@ -200,7 +200,7 @@ sub extract_quotelike (;$$)
 		my $matched;
 		($matched,$text) = extract_delimited($text, $ldel1);
 	        return @fail unless $matched;
-		if ($ldel1 =~ m#[/]()#) { $text =~ s/(\s*($mods{''}*))// }
+		$text =~ s/\A(($mods{none})*)// if ($ldel1 =~ m#[/]()#);
 		return ($matched.$1,$text,$pre,
 			'',					# OPERATOR
 			$ldel1,					# BLOCK 1 LEFT DELIM
@@ -209,7 +209,7 @@ sub extract_quotelike (;$$)
 			'',					# BLOCK 2 LEFT DELIM
 			'',					# BLOCK 2 
 			'',					# BLOCK 2 RIGHT DELIM
-			$2?$2:''				# MODIFIERS
+			$1?$1:''				# MODIFIERS
 			);
 	}
 
@@ -268,7 +268,7 @@ sub extract_quotelike (;$$)
 	}
 	$block2 =~ s/.(.*)./$1/s;
 
-	$text =~ s/\A\s*($mods{$quotelike}*)//;
+	$text =~ s/\A($mods{$quotelike}*)//;
 
 	return (substr($orig,0,length($orig)-length($text)),$text,$pre,
 		$quotelike,	# OPERATOR
