@@ -1,5 +1,5 @@
 ==============================================================================
-                  Release of version 1.83 of Text::Balanced
+                  Release of version 1.84 of Text::Balanced
 ==============================================================================
 
 
@@ -66,9 +66,12 @@ COPYRIGHT
 
 ==============================================================================
 
-CHANGES IN VERSION 1.83
+CHANGES IN VERSION 1.84
 
-(No changes have been documented for this version)
+
+	- Fixed bug in certain extractions not matching strings
+	  with embedded newlines (thanks Robin)
+
 
 ==============================================================================
 

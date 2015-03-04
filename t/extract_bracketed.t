@@ -6,7 +6,7 @@
 # Change 1..1 below to 1..last_test_to_print .
 # (It may become useful if the test is moved to ./t subdirectory.)
 
-BEGIN { $| = 1; print "1..17\n"; }
+BEGIN { $| = 1; print "1..19\n"; }
 END {print "not ok 1\n" unless $loaded;}
 use Text::Balanced qw ( extract_bracketed );
 $loaded = 1;
@@ -53,6 +53,7 @@ __DATA__
 
 # USING: extract_bracketed($str);
 {a nested { and } are okay as are () and <> pairs and escaped \}'s };
+{a nested\n{ and } are okay as are\n() and <> pairs and escaped \}'s };
 
 # USING: extract_bracketed($str,'{}');
 {a nested { and } are okay as are unbalanced ( and < pairs and escaped \}'s };
