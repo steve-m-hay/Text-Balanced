@@ -1,8 +1,7 @@
 ==============================================================================
-                  Release of version 1.66 of Text::Balanced
+                  Release of version 1.76 of Text::Balanced
 ==============================================================================
 
-DESCRIPTION
 
 NAME
 
@@ -59,7 +58,7 @@ AUTHOR
 
 COPYRIGHT
 
-       Copyright (c) 1997, Damian Conway. All Rights Reserved.
+       Copyright (c) 1997-2000, Damian Conway. All Rights Reserved.
      This module is free software. It may be used, redistributed
      and/or modified under the terms of the Perl Artistic License
           (see http://www.perl.com/perl/misc/Artistic.html)
@@ -67,20 +66,43 @@ COPYRIGHT
 
 ==============================================================================
 
-CHANGES IN VERSION 1.66
+CHANGES IN VERSION 1.76
 
 
-	- Added ability to use quotelike operators in extract_bracketed
+	- IMPORTANT: Now requires 5.005 or better.
 
-	- Fixed bug under 5.003 ('foreach my $func' not understood)
+	- IMPORTANT: Made extract methods sensitive to the pos()
+	  value of the text they are parsing. In other words,
+	  all extract subroutines now act like patterns of the form
+	  /\G.../gc. See documentation for details.
 
-	- Added escape specification as fourth arg to &extract_delimited
+	- IMPORTANT: Changed semantics of extract_multiple, in line
+	  with the above change, and to simplify the semantics to
+	  something vaguely predictable. See documentation for details.
 
-	- Fixed handling of &delimited_pat and &extract_delimited
-	  when delimiter is same as escape
+	- Added ability to use qr/../'s and raw strings as extractors
+	  in extract_multiple. See documentation.
 
-	- Fixed handling of ->, =>, and >> in &extract_code
-	  when delimiters are "<>"
+	- Added fourth argument to extract_codeblock to allow
+	  outermost brackets to be separately specified. See
+	  documentation for details.
+
+	- Reimplemented internals of all extraction subroutines
+	  for significant speed-ups (between 100% and 2000%
+	  improvement).
+
+	- Fixed nasty bug in extract_variable and extract_codeblock
+	  (they were returning prefix as well in scalar context)
+
+	- Allowed read-only strings to be used as arguments in
+	  scalar contexts.
+
+	- Renamed delimited_pat to gen-delimited pat (in line with
+	  gen_extract_tagged). Old name still works, but is now deprecated.
+
+	- Tweaked all extraction subs so they correctly handle 
+	  zero-length prefix matches after another zero-length match.
+
 
 
 ==============================================================================

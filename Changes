@@ -134,3 +134,41 @@ Revision history for Perl extension Text::Balanced.
 
 	- Fixed handling of ->, =>, and >> in &extract_code
 	  when delimiters are "<>"
+
+
+1.76	Fri Nov 19 06:51:54 1999
+
+	- IMPORTANT: Now requires 5.005 or better.
+
+	- IMPORTANT: Made extract methods sensitive to the pos()
+	  value of the text they are parsing. In other words,
+	  all extract subroutines now act like patterns of the form
+	  /\G.../gc. See documentation for details.
+
+	- IMPORTANT: Changed semantics of extract_multiple, in line
+	  with the above change, and to simplify the semantics to
+	  something vaguely predictable. See documentation for details.
+
+	- Added ability to use qr/../'s and raw strings as extractors
+	  in extract_multiple. See documentation.
+
+	- Added fourth argument to extract_codeblock to allow
+	  outermost brackets to be separately specified. See
+	  documentation for details.
+
+	- Reimplemented internals of all extraction subroutines
+	  for significant speed-ups (between 100% and 2000%
+	  improvement).
+
+	- Fixed nasty bug in extract_variable and extract_codeblock
+	  (they were returning prefix as well in scalar context)
+
+	- Allowed read-only strings to be used as arguments in
+	  scalar contexts.
+
+	- Renamed delimited_pat to gen-delimited pat (in line with
+	  gen_extract_tagged). Old name still works, but is now deprecated.
+
+	- Tweaked all extraction subs so they correctly handle 
+	  zero-length prefix matches after another zero-length match.
+

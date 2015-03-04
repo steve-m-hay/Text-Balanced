@@ -4,4 +4,11 @@ Makefile.PL
 README
 lib/Text/Balanced.pm
 lib/Text/Balanced.pod
-test.pl
+t/extract_bracketed.t
+t/extract_codeblock.t
+t/extract_delimited.t
+t/extract_multiple.t
+t/extract_quotelike.t
+t/extract_tagged.t
+t/extract_variable.t
+t/gen_extract_tagged.t
