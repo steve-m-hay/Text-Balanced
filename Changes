@@ -48,3 +48,12 @@ Revision history for Perl extension Text::Balanced.
 	- fixed handling of :: quantifiers in extract_variable()
 
 	- numerous trivial lexical changes to make xemacs happy
+
+
+1.36	Tue Jul 14 12:26:04 1998
+
+	- Reinstated POD file missing from previous distribution
+
+	- Added undocumented fourth parameter to extract_codeblock
+	  so as to correctly handle (?) and (s?) modifiers in
+	  RecDescent grammars.

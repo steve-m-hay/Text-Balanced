@@ -1,4 +1,5 @@
-Balanced.pm
+lib/Text/Balanced.pm
+lib/Text/Balanced.pod
 Changes
 MANIFEST
 Makefile.PL

@@ -1,5 +1,5 @@
 ==============================================================================
-                  Release of version 1.35 of Text::Balanced
+                  Release of version 1.36 of Text::Balanced
 ==============================================================================
 
 DESCRIPTION
@@ -46,13 +46,6 @@ INSTALLATION
     local Perl subdirectory.
 
 
-CHANGES
-
-    This is version 1.10.
-    Previous version was 1.01.
-    See the file "Changes" for details.
-
-
 AUTHOR
 
     Damian Conway (damian@cs.monash.edu.au)
@@ -68,12 +61,14 @@ COPYRIGHT
 
 ==============================================================================
 
-CHANGES IN VERSION 1.35
+CHANGES IN VERSION 1.36
 
 
-	- fixed handling of :: quantifiers in extract_variable()
+	- Reinstated POD file missing from previous distribution
 
-	- numerous trivial lexical changes to make xemacs happy
+	- Added undocumented fourth parameter to extract_codeblock
+	  so as to correctly handle (?) and (s?) modifiers in
+	  RecDescent grammars.
 
 
 ==============================================================================
