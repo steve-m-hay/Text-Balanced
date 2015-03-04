@@ -1,0 +1,378 @@
+=head1 NAME
+
+Text::Balanced - Extract delimited text sequences from strings.
+
+
+=head1 SYNOPSIS
+
+ use Text::Balanced qw (
+			extract_delimited
+			extract_bracketed
+			extract_quotelike
+			extract_codeblock
+		       );
+
+ # Extract the initial substring of $text which is delimited by
+ # two (unescaped) instances of the first character in $delim.
+
+	($extracted, $remainder) = extract_delimited($text,$delim);
+
+
+ # Extract the initial substring of $text which is bracketed
+ # with a delimiter(s) specified by $delim (where the string
+ # in $delim contains one or more of '(){}[]<>').
+
+	($extracted, $remainder) = extract_bracketed($text,$delim);
+
+
+ # Extract the initial substring of $text which represents a
+ # Perl "quote or quote-like operation"
+
+	($extracted, $remainder) = extract_quotelike($text);
+
+
+ # Extract the initial substring of $text which represents a block
+ # of Perl code, bracketed by any of character(s) specified by $delim
+ # (where the string $delim contains one or more of '(){}[]<>').
+
+	($extracted, $remainder) = extract_codeblock($text,$delim);
+
+
+
+=head1 DESCRIPTION
+
+=head2 C<extract_delimited>
+
+The C<extract_delimited> function formalizes the common idiom
+of extracting a single-character-delimited substring from the start of
+a string. For example, to extract a single-quote delimited string, the
+following code is typical used:
+
+	($remainder = $text) =~ s/\A('(\\'|[^'])*')//s;
+	$extracted = $1;
+
+C<extract_delimited> takes three scalars (the text, the delimiters, and a
+prefix to be skipped) and extracts the initial substring of the text
+which is appropriately delimited. If the delimiter string has multiple
+characters, the first one encountered in the text is taken to delimit the
+substring (the delimiters are simply interpolated into a regex character
+class, so care is needed with some pattern metacharacters).
+The third argument specifies a prefix pattern which is to be
+skipped (but must be present!) before the substring is extracted. 
+
+All arguments are optional. If the prefix is not specified, the
+pattern C<'\s*'> - optional whitespace - is used. If the delimiter set
+is also not specified, the set C</["'`]/> is used. If the text to be processed
+is not specified either, C<$_> is used.
+
+C<extract_delimited> returns a array of three elements,
+the extracted substring (I<including the surrounding delimiters>),
+the remainder of the text, and the skipped prefix (if any).
+
+If a suitable delimited substring is not found, the first element of
+the array is the empty string, the second is the complete original text, and
+the prefix returned in the third element is an empty string.
+
+Examples:
+
+	# Remove a single-quoted substring from the very beginning of $text:
+
+		($substring,$text) = extract_delimited($text, "'", '');
+
+
+	# Extract a single- or double- quoted substring from the
+	# beginning of $text, optionally after some whitespace:
+
+		($substring) = extract_delimited $text, q{"'};
+
+
+	# Delete the substring delimited by the first '/' in $text:
+
+		$text = join '', (extract_delimited($text,'/','[^/]*')[2,1];
+
+
+Note that this last example is I<not> the same as deleting the first
+quote-like pattern. For instance, if C<$text> contained the string:
+
+	"if ('./cmd' =~ m/$UNIXCMD/s) { $cmd = $1; }"
+	
+then after the deletion it would contain:
+
+	"if ('.$UNIXCMD/s) { $cmd = $1; }"
+
+not:
+
+	"if ('./cmd' =~ ms) { $cmd = $1; }"
+	
+
+See L<"extract_quotelike"> for a (partial) solution to this problem.
+
+
+=head2 C<extract_bracketed>
+
+Like C<L<"extract_delimited">>, the C<extract_bracketed> function takes
+up to three optional scalar arguments: a string to extract from, a delimiter
+specifier, and a prefix pattern. As before, a missing prefix defaults to
+optional whitespace and a missing text defaults to C<$_>. However, a missing
+delimiter specifier defaults to C<'{}()[]E<lt>E<gt>'> (see below).
+
+Also like C<extract_delimited>, C<extract_bracketed> returns an array
+consisting of the matched substring, the remainder of the text, and
+the skipped prefix (if any).
+
+C<extract_bracketed> extracts a balanced-bracket-delimited
+substring (using any one (or more) of the user-specified delimiter
+brackets: '(..)', '{..}', '[..]', or '<..>').
+
+A "delimiter bracket" is a bracket in list of delimiters passed as
+C<extract_bracketed>'s second argument. Delimiter brackets are
+specified by giving either the left or right (or both!) versions
+of the required bracket(s). Note that the order in which
+two or more delimiter brackets are specified is not significant.
+
+A "balanced-bracket-delimited substring" is a substring bounded by
+matched brackets, such that any other (left or right) delimiter
+bracket I<within> the substring is also matched by an opposite
+(right or left) delimiter bracket I<at the same level of nesting>. Any
+type of bracket not in the delimiter list is treated as an ordinary
+character.
+
+In other words, each type of bracket specified as a delimiter must be
+balanced and correctly nested within the substring, and any other kind of
+("non-delimiter") bracket in the substring is ignored.
+
+For example, given the string:
+
+	$text = "{ an '[irregularly :-(] {} parenthesized >:-)' string }";
+
+then the call:
+
+	extract_bracketed( $text, '{}' );
+
+would return:
+
+	( "{ an '[irregularly :-(] {} parenthesized >:-)' string }" , "" , "" )
+
+since both sets of C<'{..}'> brackets are properly nested and evenly balanced.
+
+Likewise the call:
+
+	extract_bracketed( $text, '{[' );
+
+would return the same result, since all sets of both types of specified
+delimiter brackets are correctly nested and balanced.
+
+However, the call:
+
+	extract_bracketed( $text, '{([<' );
+
+would fail, returning:
+
+	( "" , "{ an '[irregularly :-(] {} parenthesized >:-)' string }" , "" );
+
+because the embedded pairs of C<'(..)'>s and C<'[..]'>s are "cross-nested" and
+the embedded C<'E<gt>'> is unbalanced.
+
+Note that the embedded single-quotes in the string don't help in this
+case, since they treated as non-delimiter characters and therefore
+ignored. See L<"extract_quotelike"> and L<"extract_codeblock">, which
+I<do> understand the nesting behaviour of the various species of Perl
+quotes.
+
+
+=head2 C<extract_quotelike>
+
+C<extract_quotelike> attempts to recognize and extract any one of
+the various Perl quotes and quotelike operators (see L<perlop(3)>)
+Nested backslashed delimiters, embedded balanced bracket delimiters
+(for the quotelike operators), and trailing modifiers are all caught.
+For example:
+
+	'q # a literal octothorpe: \# (not the end of the q!) #'
+	
+	'  "You said, \"Use sed\"."  '
+
+	' s{([A-Z]{1,8}\.[A-Z]{3})} /\L$1\E/; '
+
+	' tr/\\\/\\\\/\\\//ds; '
+
+are all extracted correctly.
+
+Note however that C<extract_quotelike> I<does not recognize> the vaguely
+deprecated C<?....?> pattern match operator. This is not because it is
+frowned upon, but simply because it is not obvious how to distinguish
+from the ternary operator (C<?:>), without deciphering the entire Perl
+semantics of the processed text [suggestions are welcome].
+
+C<extract_quotelike> takes two arguments: the text to be processed and
+a prefix to be matched at the very beginning of the text. If no prefix 
+is specified, optional whitespace is the default. If no text is given,
+C<$_> is used.
+
+Examples:
+
+	# Extract the first quotelike literal that appears in text
+
+		($quotelike) = extract_quotelike($text,'.*?');
+
+
+	# Replace one or more leading whitespace-separated quotelike
+	# literals in $_ with "<QLL>"
+
+		do { $_ = join '<QLL>', (extract_quotelike)[2,1] } until $@;
+
+
+=head2 C<extract_codeblock>
+
+C<extract_codeblock> attempts to recognize and extract a balanced
+bracket delimited substring which may contain unbalanced brackets
+inside Perl quotes or quotelike operations. That is, C<extract_codeblock>
+is like a combination of C<L<"extract_bracketed">> and
+C<L<"extract_quotelike">>.
+
+C<extract_codeblock> takes the same three parameters as C<extract_bracketed>:
+a text to process, a set of delimiter brackets to look for, and a prefix to
+match first. No prefix argument implies optional whitespace at the start, no
+delimiter brackets indciates that only C<'{'> is to be used
+(I<unlike> C<extract_delimited>), no text means process C<$_>.
+
+Once the prefix has been disposed of, code blocks are extracted by
+stepping through the text and trying the following alternatives in
+sequence:
+
+=over 4
+
+=item 1.
+
+Try and match a closing delimiter bracket. If the bracket was the same
+species as the last opening bracket, return the substring to that
+point. If the bracket was mismatched, return an error.
+
+=item 2.
+
+Try to match a quote or quotelike operator. If found, call
+C<extract_quotelike> to eat it. If C<extract_quotelike> fails, return
+the error it returned. Otherwise go back to step 1.
+
+=item 3.
+
+Try to match an opening delimiter bracket. If found, call
+C<extract_codeblock> recursively to eat the embedded block. If the
+recursive call fails, return an error. Otherwise, go back to step 1.
+
+=item 4.
+
+Unconditionally match a bareword or any other single character, and
+then go back to step 1.
+
+=back
+
+
+Examples:
+
+	# Find a while loop in the text
+
+		if ($text =~ s/.*?while\s*\{/{/)
+		{
+			$loop = "while " . (extract_codeblock $text)[0];
+		}
+
+	# Remove the first round-bracketed list (which may include
+	# round- or curly-bracketed code blocks or quotelike operators)
+
+		$text = join '', (extract_codeblock($text,"(){}",'[^(]*')[2,1];
+
+
+=head1 DIAGNOSTICS
+
+All the functions return C<('',$original_text,'')> on failure. In
+addition, one of the following explanatory diagnostic messages is
+returned in the C<$@> variable:
+
+=over 4
+
+=item  C<Did not find a suitable bracket: "%s">
+
+The delimiter provided to C<extract_bracketed> was not one of
+C<'()[]E<lt>E<gt>{}'>.
+
+=item  C<Did not find prefix: /%s/>
+
+A non-optional prefix was specified but wasn't found at the start of the text.
+
+=item  C<Could not extract "%c"-delimited substring>
+
+C<extract_delimited>, C<extract_quotelike> or C<extract_codeblock>
+couldn't find an initial substring (after the prefix) which was
+delimited by the delimiter(s) specified.
+
+=item  C<Did not find opening bracket after prefix: "%s">
+
+C<extract_bracketed> or C<extract_codeblock> was expecting a
+particular kind of bracket at the start of the text, and didn't find it.
+
+=item  C<No quotelike operator found after prefix: "%s">
+
+C<extract_quotelike> didn't find one of the quotelike operators C<q>,
+C<qq>, C<qw>, C<qx>, C<s>, C<tr> or C<y> at the start of the substring
+it was extracting.
+
+=item  C<Unmatched closing bracket: "%c">
+
+C<extract_bracketed>, C<extract_quotelike> or C<extract_codeblock> encountered
+a closing bracket where none was expected.
+
+=item  C<Unmatched opening bracket(s): "%s">
+
+C<extract_bracketed>, C<extract_quotelike> or C<extract_codeblock> ran 
+out of characters in the text before closing one or more levels of nested
+brackets.
+
+=item  C<Mismatched closing bracket: expected "%c" but found "%s">
+
+C<extract_bracketed>, C<extract_quotelike> or C<extract_codeblock> found
+a valid bracket delimiter, but it was the wrong species. This usually
+indicates a nesting error, but may indicate incorrect quoting or escaping.
+
+=item  C<No block delimiter found after quotelike "%s">
+
+C<extract_quotelike> or C<extract_codeblock> found one of the
+quotelike operators C<q>, C<qq>, C<qw>, C<qx>, C<s>, C<tr> or C<y>
+without a suitable block after it.
+
+=item  C<Missing second block for quotelike "%s">
+
+C<extract_codeblock> or C<extract_quotelike> found one of the
+quotelike operators C<s>, C<tr> or C<y> followed by only one block.
+
+=item  C<Nested codeblock failed to balance from "%s...">
+
+A block within the substring being extracted by C<extract_codeblock> was
+incorrectly nested or had a unmatched delimiter in it.
+
+=back
+
+
+=head1 AUTHOR
+
+Damian Conway (damian@cs.monash.edu.au)
+
+
+=head1 BUGS AND IRRITATIONS
+
+There are undoubtedly serious bugs lurking somewhere in this code, if
+only because it gives the impression of understanding a great deal
+more about Perl than it really does. Remember in particular, that
+neither C<extract_quotelike> nor C<extract_codeblock> honour ( or even
+know about) C<?...?> patterns.
+
+Bug reports and other feedback are most welcome.
+
+
+=head1 COPYRIGHT
+
+   Copyright (c) 1997, Damian Conway. All Rights Reserved.
+ This module is free software. It may be used, redistributed
+and/or modified under the terms of the Perl Artistic License
+     (see http://www.perl.com/perl/misc/Artistic.html)
+
