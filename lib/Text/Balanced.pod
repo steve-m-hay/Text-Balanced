@@ -691,7 +691,7 @@ In a scalar and void context, a call to C<extract_multiple> removes the
 leading substring which would have been removed by any one of the
 specified extraction subroutines.
 
-The subroutine takes up to three optional arguments:
+The subroutine takes up to four optional arguments:
 
 =over 4
 
@@ -785,6 +785,26 @@ This does the same, but also captures the discarded preliminary substring:
 Putting the maximum count in that last example is important because otherwise
 C<extract_multiple> would process the entire string (possibly extracting many
 fields) and then discard all but the first two.
+
+Finally, here is yet another way to do comma-separated value parsing:
+
+        @fields = extract_multiple($csv_text,
+                                  [
+					sub { extract_delimited($_[0],q{'"}) },
+                                        sub { $_[0] =~ /\A([^,]+)(.*)/ },
+                                  ],
+                                  undef,1);
+
+The list in the second argument means:
+I<"Try and extract a ' or " delimited string, otherwise extract anything up to a comma...">.
+The undef third argument means:
+I<"...as many times as possible...">,
+and the true value in the fourth argument means
+I<"...discarding anything else that appears (i.e. the commas)">.
+
+If you wanted the commas preserved as separate fields (i.e. like split
+does if your split pattern has capturing parentheses), you would
+just make the last parameter undefined (or remove it).
 
 
 =head2 C<delimited_pat>

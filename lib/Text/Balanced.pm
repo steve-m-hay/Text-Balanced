@@ -9,7 +9,7 @@ use Exporter;
 use SelfLoader;
 use vars qw { $VERSION @ISA %EXPORT_TAGS };
 
-$VERSION = '1.51';
+$VERSION = '1.52';
 @ISA		= qw ( Exporter );
 		     
 %EXPORT_TAGS	= ( ALL => [ qw(
@@ -333,7 +333,7 @@ sub extract_codeblock (;$$$$)
 	while (length $text)
 	{
 		$matched = '';
-		if ($rd && $text =~ s#\A(\Q(?)\E|\Q(s?)\E)##)
+		if ($rd && $text =~ s#\A(\Q(?)\E|\Q(s?)\E|\Q(s)\E)##)
 		{
 			$patvalid = 0;
 			next;

@@ -110,3 +110,12 @@ Revision history for Perl extension Text::Balanced.
 	- Added gen_extract_tagged() to "precompile"
 	  a specific tag extractor for repeated use
 	  (approximately 3 times faster!)
+
+
+1.52	Thu Mar  4 12:43:38 1999
+
+	- Added CSV parsing example to documentation of extract_multiple.
+
+	- Fixed a bug with extract_codeblock in "RecDescent" mode
+	  (it would accept "subrule(s?)" and "subrule(?)", but
+	   not "subrule(s)"). Thanks, Jan.

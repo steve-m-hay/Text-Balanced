@@ -1,5 +1,5 @@
 ==============================================================================
-                  Release of version 1.51 of Text::Balanced
+                  Release of version 1.52 of Text::Balanced
 ==============================================================================
 
 DESCRIPTION
@@ -67,24 +67,14 @@ COPYRIGHT
 
 ==============================================================================
 
-CHANGES IN VERSION 1.51
+CHANGES IN VERSION 1.52
 
 
-	- Fixed bugs in prefix matching in extract_variable:
-	  	* incorrectly used default if '' specified
-		* now handles $#array correctly
+	- Added CSV parsing example to documentation of extract_multiple.
 
-	- Fixed bugs in extract_codeblock:
-		  * Now handles !~ properly
-		  * Now handles embedded comments better.
-		  * Now handles "raw" pattern matches better.
-
-	- Added support for single strings or qr's as
-	  'reject' and 'ignore' args to extract_tagged()
-
-	- Added gen_extract_tagged() to "precompile"
-	  a specific tag extractor for repeated use
-	  (approximately 3 times faster!)
+	- Fixed a bug with extract_codeblock in "RecDescent" mode
+	  (it would accept "subrule(s?)" and "subrule(?)", but
+	   not "subrule(s)"). Thanks, Jan.
 
 
 ==============================================================================
