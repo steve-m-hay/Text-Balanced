@@ -6,7 +6,7 @@
 # Change 1..1 below to 1..last_test_to_print .
 # (It may become useful if the test is moved to ./t subdirectory.)
 
-BEGIN { $| = 1; print "1..53\n"; }
+BEGIN { $| = 1; print "1..61\n"; }
 END {print "not ok 1\n" unless $loaded;}
 use Text::Balanced qw ( :ALL );
 $loaded = 1;
@@ -17,6 +17,20 @@ sub debug {}
 
 ######################### End of black magic.
 
+
+# $text = q{$var = do {"val" && $val;};};
+# print "[", join('|', extract_multiple($text,undef,1)), "]\n";
+# print "[", join('|', extract_multiple($text,undef,2)), "]\n";
+# print "[", join('|', extract_multiple($text,undef,3)), "]\n";
+# print "[", join('|', extract_multiple($text,undef,4)), "]\n";
+# print "[", join('|', extract_multiple($text,undef,5)), "]\n";
+# print "[", join('|', extract_multiple($text)), "]\n";
+# 
+# $text = q{$var = "val" && (1,2,3);};
+# print "[", join('|', extract_multiple($text)), "]\n";
+# 
+# print "[", join('|', extract_multiple($text,[\&extract_bracketed])), "]\n";
+
 $cmd = "print";
 $neg = 0;
 while (defined($str = <DATA>))
@@ -25,15 +39,29 @@ while (defined($str = <DATA>))
 	if ($str =~ s/\A# USING://) { $neg = 0; $cmd = $str; next; }
 	elsif ($str =~ /\A# TH[EI]SE? SHOULD FAIL/) { $neg = 1; next; }
 	elsif (!$str || $str =~ /\A#/) { $neg = 0; next }
+	$str =~ s/\\n/\n/g;
 	debug "\tUsing: $cmd\n";
 	debug "\t   on: [$str]\n";
 	$var = eval $cmd;
 	debug "\t left: [$str]\n";
 	print "not " if ($str =~ '\A;')==$neg;
-	print "ok ", $count++, "\n";
+	print "ok ", $count++;
+	print " ($@)" if $@;
+	print "\n";
 }
 
 __DATA__
+
+# USING: use 5.005; extract_tagged($str,qr/<[A-Z]+>/,undef, undef, {ignore=>["<BR>"]});
+	<A>aaa<B>bbb<BR>ccc</B>ddd</A>;
+
+# USING: extract_codeblock($str,'{}');
+{ $a = $b; # what's this doing here? \n };'
+{ $a = $b; \n $a =~ /$b/; \n @a = map /\s/ @b };
+
+# THIS SHOULD FAIL
+{ $a = $b; # what's this doing here? };'
+
 # USING: extract_tagged($str,";","-",undef,{reject=>[";"],fail=>"MAX"});
 	; at the ;-) keyword
 
@@ -99,6 +127,10 @@ $a->{"cat"}[1];
 @{$obj->nextval(cat()?$dog:$fish)->{new}};
 $ a {'cat'};
 $a::b::c{d}->{$e->()};
+$#_;
+$#array;
+$#{array};
+$var[$#var];
 
 # THESE SHOULD FAIL
 $a->;
@@ -134,4 +166,3 @@ $c$;
 # THESE SHOULD FAIL
 {an unmatched nested { isn't okay, nor are ( and < };
 {an unbalanced nested [ even with } and ] to match them;
-

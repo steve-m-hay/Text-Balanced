@@ -8,52 +8,80 @@ Text::Balanced - Extract delimited text sequences from strings.
  use Text::Balanced qw (
 			extract_delimited
 			extract_bracketed
-			extract_tagged
 			extract_quotelike
-			extract_variable
 			extract_codeblock
+			extract_variable
+			extract_tagged
+			extract_multiple
 
 			delimited_pat
+
+			gen_extract_tagged
 		       );
 
- # Extract the initial substring of $text which is delimited by
+ # Extract the initial substring of $text that is delimited by
  # two (unescaped) instances of the first character in $delim.
 
 	($extracted, $remainder) = extract_delimited($text,$delim);
 
 
- # Extract the initial substring of $text which is bracketed
+ # Extract the initial substring of $text that is bracketed
  # with a delimiter(s) specified by $delim (where the string
  # in $delim contains one or more of '(){}[]<>').
 
 	($extracted, $remainder) = extract_bracketed($text,$delim);
 
 
- # Extract the initial substring of $text which is bounded by
+ # Extract the initial substring of $text that is bounded by
  # an HTML/XML tag.
 
 	($extracted, $remainder) = extract_tagged($text);
 
 
- # Extract the initial substring of $text which is bounded by
+ # Extract the initial substring of $text that is bounded by
  # a C<BEGIN>...C<END> pair. Don't allow nested C<BEGIN> tags
 
 	($extracted, $remainder) =
 		extract_tagged($text,"BEGIN","END",undef,{bad=>["BEGIN"]});
 
 
- # Extract the initial substring of $text which represents a
+ # Extract the initial substring of $text that represents a
  # Perl "quote or quote-like operation"
 
 	($extracted, $remainder) = extract_quotelike($text);
 
 
- # Extract the initial substring of $text which represents a block
+ # Extract the initial substring of $text that represents a block
  # of Perl code, bracketed by any of character(s) specified by $delim
  # (where the string $delim contains one or more of '(){}[]<>').
 
 	($extracted, $remainder) = extract_codeblock($text,$delim);
 
+
+ # Extract the initial substrings of $text that would be extracted by
+ # one or more sequential applications of the specified functions.
+
+	@extracted = extract_multiple($text,
+				      [ \&extract_bracketed,
+					\&extract_quotelike,
+					\&some_ther_extractor_sub
+				      ]);
+
+# Create a string representing an optimized pattern (a la Friedl)
+# that matches a substring delimited by any of the specified characters
+# (in this case: any type of quote or a slash)
+
+	$patstring = delimited_pat(q{'"`/});
+
+
+# Generate a reference to an anonymous sub that is just like extract_tagged
+# but pre-compiled and optimized for a specific pair of tags, and consequently
+# much faster (i.e. 3 times faster). It uses qr// for better performance on
+# repeated calls, so it only works under Perl 5.005 or later.
+
+	$extract_head = gen_extract_tagged('<HEAD>','<\\HEAD>');
+
+	($extracted, $remainder) = $extract_head->($text);
 
 
 =head1 DESCRIPTION
@@ -90,12 +118,12 @@ but with C<extract_delimited> it can be simplified to:
 
 C<extract_delimited> takes up to three scalars (the input text, the
 delimiters, and a prefix to be skipped) and extracts the initial
-substring of the text which is appropriately delimited. If the
+substring of the text that is appropriately delimited. If the
 delimiter string has multiple characters, the first one encountered in
 the text is taken to delimit the substring (the delimiters are simply
 interpolated into a regex character class, so care is needed with some
 pattern metacharacters). The third argument specifies a prefix pattern
-which is to be skipped (but must be present!) before the substring is
+that is to be skipped (but must be present!) before the substring is
 extracted.
 
 All arguments are optional. If the prefix is not specified, the
@@ -263,7 +291,7 @@ A string to be processed (C<$_> if the string is omitted or C<undef>)
 
 A string specifying a pattern to be matched as the opening tag.
 If the pattern string is omitted (or C<undef>) then a pattern
-which matches any standard HTML/XML tag is used.
+that matches any standard HTML/XML tag is used.
 
 =item 3.
 
@@ -286,14 +314,14 @@ A hash reference containing various parsing options (see below)
 
 =back
 
-The various options which can be specified are:
+The various options that can be specified are:
 
 =over 4
 
 =item C<reject =E<gt> $listref>
 
 The list reference contains one or more strings specifying patterns
-which must I<not> appear within the tagged text.
+that must I<not> appear within the tagged text.
 
 For example, to extract
 an HTML link (which should not contain nested links) use:
@@ -303,7 +331,7 @@ an HTML link (which should not contain nested links) use:
 =item C<ignore =E<gt> $listref>
 
 The list reference contains one or more strings specifying patterns
-which are I<not> be be treated as nested tags within the tagged text
+that are I<not> be be treated as nested tags within the tagged text
 (even if they would match the start tag pattern).
 
 For example, to extract an arbitrary XML tag, but ignore "empty" elements:
@@ -323,7 +351,7 @@ tag causes C<extract_tagged> to immediately fail.
 However, if the string value associated with <reject> is "MAX", then
 C<extract_tagged> returns the complete text up to the point of failure.
 If the string is "PARA", C<extract_tagged> returns only the first paragraph
-after the tag (up to the first line which is either empty or contains
+after the tag (up to the first line that is either empty or contains
 only whitespace characters).
 If the string is "", the the default behaviour (i.e. failure) is reinstated.
 
@@ -385,12 +413,69 @@ the closing tag (or "" if no closing tag was found)
 On failure, all of these values (except the remaining text) are C<undef>.
 
 In a scalar context, C<extract_tagged> returns just the complete
-substring which matched a tagged text (including the start and end
+substring that matched a tagged text (including the start and end
 tags). C<undef> is returned on failure. In addition, the original input
 text has the returned substring (and any prefix) removed from it.
 
 In a void context, the input text just has the matched substring (and
 any specified prefix) removed.
+
+
+=head2 C<gen_extract_tagged>
+
+(Note: This subroutine is only available under Perl5.005)
+
+C<gen_extract_tagged> generates a new anonymous subroutine which
+extracts and segments text between (balanced) specified tags. In other words,
+it generates a function identical in function to C<extract_tagged>.
+
+The difference between C<extract_tagged> and the subroutines generated by
+C<gen_extract_tagged>, is that those anonymous subroutines:
+
+=over 4
+
+=item *
+
+are limited to the actual tags specified to C<gen_extract_tagged>
+(whereas C<extract_tagged> can automatically select tags as they
+are encountered during extraction);
+
+=item * 
+
+do not have to reparse tag specification or parsing options every time
+they are called (whereas C<extract_tagged> has to effectively rebuild
+its tag parser on every call);
+
+=item *
+
+make use of the new qr// construct to pre-compile the regexes they use
+(whereas C<extract_tagged> uses standard string variable interpolation 
+to create tag-matching patterns).
+
+=back
+
+The subroutine takes up to four optional arguments (the same set as
+C<extract_tagged> except for the string to be processed). It returns
+a reference to a subroutine which in turn takes a single argument (the text to
+be extracted from).
+
+In other words, the implementation of C<extract_tagged> is exactly
+equivalent to:
+
+	sub extract_tagged
+	{
+		my $text = shift;
+		$extractor = gen_extract_tagged(@_);
+		return $extractor->($text);
+	}
+
+(although C<extract_tagged> is not currently implemented that way, in order
+to preserve pre-5.005 compatibility).
+
+Using C<gen_extract_tagged> to create extraction functions for specific tags 
+is a good idea if those functions are going to be called more than once, since
+their performance is typically three times better than the more general-purpose
+C<extract_tagged>.
 
 
 =head2 C<extract_quotelike>
@@ -496,7 +581,7 @@ On failure, all of these values (except the remaining text) are C<undef>.
 
 
 In a scalar context, C<extract_quotelike> returns just the complete substring
-which matched a quotelike operation (or C<undef> on failure). In a scalar or
+that matched a quotelike operation (or C<undef> on failure). In a scalar or
 void context, the input text has the same substring (and any specified
 prefix) removed.
 
@@ -528,7 +613,7 @@ Examples:
 =head2 C<extract_codeblock>
 
 C<extract_codeblock> attempts to recognize and extract a balanced
-bracket delimited substring which may contain unbalanced brackets
+bracket delimited substring that may contain unbalanced brackets
 inside Perl quotes or quotelike operations. That is, C<extract_codeblock>
 is like a combination of C<"extract_bracketed"> and
 C<"extract_quotelike">.
@@ -586,11 +671,127 @@ Examples:
 		extract_codeblock $text, "(){}", '[^(]*';
 
 
+=head2 C<extract_multiple>
+
+The C<extract_multiple> subroutine takes a string to be processed and a 
+list of extraction subroutines to apply to that string. In an array context
+C<extract_multiple> returns an array of substrings of the original string,
+as extracted by the various extraction subroutines. In a scalar context,
+C<extract_multiple> returns the first substring successfully extracted
+from the original string. In both scalar and void contexts the original string
+has the first successfully extracted substring removed from it.
+
+Hence, the aim of of a call to C<extract_multiple> in a list context
+is to split the processed string into as many non-overlapping fields as
+possible, by repeatedly applying each of the specified extractor
+subroutines to the remainder of the string. Thus C<extract_multiple> is
+a generalized form of Perl's inbuilt C<split> subroutine.
+
+In a scalar and void context, a call to C<extract_multiple> removes the
+leading substring which would have been removed by any one of the
+specified extraction subroutines.
+
+The subroutine takes up to three optional arguments:
+
+=over 4
+
+=item 1.
+
+A string to be processed (C<$_> if the string is omitted or C<undef>)
+
+=item 2.
+
+A reference to a list of subroutine references, specifying the extractor
+subroutines to be used to split the string. If this argument is omitted (or
+C<undef>) the list:
+
+	[
+		sub { extract_variable($_[0], '') },
+		sub { extract_quotelike($_[0],'') },
+		sub { extract_codeblock($_[0],'{}','') },
+	]
+
+is used.
+
+
+=item 3.
+
+An number specifying the maximum number of fields to return. If this
+argument is omitted (or C<undef>), split continues as long as possible.
+
+If the third argument is I<N>, then at most I<N-1> splits will be
+performed and the array return value of C<extract_multiple> will
+contain at most I<N> elements (where the very last element is always
+the unsplit remainder of the original string)
+
+Note that in scalar and void contexts the value of this argument is 
+automatically set to 2, unless the fourth argument (see below) is set
+to true, in which case the maximum is set to 1..
+
+=item 4.
+
+A value indicating whether unmatched substrings (see below) within the
+text should be skipped or returned as fields. If the value is true,
+such substrings are skipped. Otherwise, they are returned.
+
+=back
+
+The extraction process works by applying each extractor subroutine in sequence
+to the text string. Each subroutine is called in a list context and is expected
+to return two elements: the extract substring and the remainder of the original
+string. If the subroutine returns an undefined value, it is assumed to have
+failed to extract.
+
+If an extractor subroutine returns a defined value, that value is immediately
+treated as the next extracted field and pushed onto the list of fields. The
+text being processed is then assigned the remainder returned by the successful
+extractor function. If none of the extractor subroutines succeeds, then one
+character is extracted from the start of the text and the extraction
+subroutines reapplied. Characters which are thus removed are accumulated and
+eventually become the next field (unless the fourth argument is true, in which
+case they are disgarded).
+
+For example, the following extracts substrings that are valid Perl variables:
+
+	@fields = extract_multiple($text,
+				   [ sub { extract_variable($_[0]) } ],
+				   undef, 1);
+
+This example separates a text into fields which are quote delimited,
+curly bracketed, and anything else:
+
+	@fields = extract_multiple($text,
+				   [
+					sub { extract_delimited($_[0],q{'"}) },
+					sub { extract_bracketed($_[0],'{}') },
+				   ]);
+
+This call extracts the next single substring that is a valid Perl quotelike
+operator (discarding everything before it):
+
+	$quotelike = extract_multiple($text,
+				      [
+					sub { extract_quotelike($_[0]) },
+				      ]);
+
+This does the same, but also captures the discarded preliminary substring:
+
+	($prelim,$quotelike) = extract_multiple($text,
+				      [
+					sub { extract_quotelike($_[0]) },
+				      ],
+				      2);
+
+Putting the maximum count in that last example is important because otherwise
+C<extract_multiple> would process the entire string (possibly extracting many
+fields) and then discard all but the first two.
+
+
 =head2 C<delimited_pat>
 
 The C<delimited_pat> subroutine takes a single (string) argument and
-builds a regex which matches a string delimited by any one of the
-characters in the single argument. For example:
+builds a Friedl-style optimized regex that matches a string delimited
+by any one of the characters in the single argument. For example:
 
 	delimited_pat(q{'"})
 
@@ -624,7 +825,7 @@ and '%' is the escape for double quotes:
 
 If more delimiters than escape chars are specified, the last escape char
 is used for the remaining delimiters.
-If no escape char is specified, '\' is used for all delimiters.
+If no escape char is specified for a given specified delimiter, '\' is used.
 	
 
 =head1 DIAGNOSTICS
@@ -651,7 +852,7 @@ A non-optional prefix was specified but wasn't found at the start of the text.
 =item  C<Could not extract "%c"-delimited substring>
 
 C<extract_delimited>, C<extract_quotelike> or C<extract_codeblock>
-couldn't find an initial substring (after the prefix) which was
+couldn't find an initial substring (after the prefix) that was
 delimited by the delimiter(s) specified.
 
 =item  C<Did not find opening bracket after prefix: "%s">
@@ -713,12 +914,12 @@ bracket of some kind.
 
 =item C<Found invalid nested tag: %s>
 
-C<extract_tagged> found a nested tag which appeared in the "reject" list
+C<extract_tagged> found a nested tag that appeared in the "reject" list
 (and the failure mode was not "MAX" or "PARA").
 
 =item C<Found unbalanced nested tag: %s>
 
-C<extract_tagged> found a nested opening tag which was not matched by a
+C<extract_tagged> found a nested opening tag that was not matched by a
 corresponding nested closing tag (and the failure mode was not "MAX" or "PARA").
 
 =item C<Did not find closing tag>

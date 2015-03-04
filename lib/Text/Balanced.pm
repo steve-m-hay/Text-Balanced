@@ -6,26 +6,31 @@ use strict;
 package Text::Balanced;
 
 use Exporter;
+use SelfLoader;
 use vars qw { $VERSION @ISA %EXPORT_TAGS };
 
-$VERSION = '1.50';
+$VERSION = '1.51';
 @ISA		= qw ( Exporter );
 		     
 %EXPORT_TAGS	= ( ALL => [ qw(
 				&delimited_pat
+
 				&extract_delimited
 				&extract_bracketed
 				&extract_quotelike
 				&extract_codeblock
 				&extract_variable
 				&extract_tagged
+				&extract_multiple
+
+				&gen_extract_tagged
 			       ) ] );
 
 Exporter::export_ok_tags('ALL');
 
 # PAY NO ATTENTION TO THE TRACE BEHIND THE CURTAIN
-# sub _trace($) { print $_[0], "\n"; }
 sub _trace($) {}
+# sub _trace($) { print STDERR $_[0], "\n"; }
 
 # HANDLE RETURN VALUES IN VARIOUS CONTEXTS
 
@@ -172,11 +177,15 @@ sub extract_tagged (;$$$$$)
 	my $rdel = $_[2];
 	my $pre  = defined $_[3] ? $_[3] : '\s*';
 	my %options = defined $_[4] ? %{$_[4]} : ();
-	my @bad  = defined $options{reject} ? @{$options{reject}} : ();
-	my @ignore  = defined $options{ignore} ? @{$options{ignore}} : ();
 	my $omode = defined $options{fail} ? $options{fail} : '';
-	my $bad  = join('|', @bad);
-	my $ignore  = join('|', @ignore);
+	my $bad     = ref($options{reject}) eq 'ARRAY' ? join('|', @{$options{reject}})
+		    : defined($options{reject})	       ? $options{reject}
+		    :					 ''
+		    ;
+	my $ignore  = ref($options{ignore}) eq 'ARRAY' ? join('|', @{$options{ignore}})
+		    : defined($options{ignore})	       ? $options{ignore}
+		    :					 ''
+		    ;
 	my @fail = (wantarray,undef,$text);
 	$@ = undef;
 
@@ -281,7 +290,7 @@ sub extract_variable (;$$)
 	unless ($text =~ s/\A($pre)//s)
 		{ $@ = "Did not find prefix: /$pre/"; return _fail @fail; }
 	$pre = $1;
-	unless ($text =~ s/\A[\$\@\%]+//s)
+	unless ($text =~ s/\A(\S#|[\$\@\%])+//s)
 		{ $@ = "Did not find leading dereferencer";
 		  return _fail @fail; }
 
@@ -329,6 +338,12 @@ sub extract_codeblock (;$$$$)
 			$patvalid = 0;
 			next;
 		}
+
+		if ($text =~ s/\A\s*#.*//)
+		{
+			next;
+		}
+
 		if ($text =~ s/\A\s*$rdel//)
 		{
 			$matched = ($1 eq $closing);
@@ -341,7 +356,7 @@ sub extract_codeblock (;$$$$)
 			last;
 		}
 
-		if ($text =~ s!\A\s*(=~|split|grep|map|return|;)!!)
+		if ($text =~ s!\A\s*(=~|\!~|split|grep|map|return|;|[|]{1,2}|[&]{1.2})!!)
 		{
 			$patvalid = 1;
 			next;
@@ -396,7 +411,7 @@ sub extract_quotelike (;$$)
 	my $text = $_[0] ? $_[0] : defined $_ ? $_ : '';
 	my $wantarray = wantarray;
 	my @fail = (wantarray,undef,$text);
-	my $pre  = $_[1] ? $_[1] : '\s*';
+	my $pre  = defined $_[1] ? $_[1] : '\s*';
 
 	my $ldel1  = '';
 	my $block1 = '';
@@ -517,6 +532,205 @@ sub extract_quotelike (;$$)
 			$rdel2,
 			$1?$1:''	# MODIFIERS
 			;
+}
+
+my $def_func = 
+[
+	sub { extract_variable($_[0], '') },
+	sub { extract_quotelike($_[0],'') },
+	sub { extract_codeblock($_[0],'{}','') },
+];
+
+sub extract_multiple (;$$$$)	# ($text, $functions_ref, $max_fields, $ignoreunknown)
+{
+	my $text = defined $_[0] ? $_[0]    : $_;
+	my @func = defined $_[1] ? @{$_[1]} : @$def_func;
+	my $max  = defined $_[2] && $_[2]>0 ? $_[2] : 1_000_000_000;
+	my $igunk = $_[3];
+
+	$max = 2 unless wantarray;
+
+	my @fields = ();
+	my $unknown = "";
+	my $field = "";
+	my $remainder = "";
+
+	FIELD: while ($text && @fields<$max-1)
+	{
+		foreach my $func ( @func )
+		{
+			($field,$remainder) = &$func($text);
+			if ($field)
+			{
+				if ($unknown)
+				{
+					push @fields, $unknown unless $igunk;
+					$unknown = "";
+				}
+				push @fields, $field;
+				$field = "";
+				$text = $remainder;
+				next FIELD;
+			}
+		}
+		$unknown .= substr($text,0,1);
+		substr($text,0,1) = "";
+	}
+	push @fields, $unknown if $unknown && ! $igunk;
+	push @fields, $text    if $text;
+
+	splice @fields, $max-1, @fields-$max+1,
+		join('',@fields[$max-1..$#fields])
+			if @fields>$max;
+
+	return @fields if wantarray;
+	eval { $_[0] = $fields[1] };
+	return $fields[0];
+}
+
+1;
+
+__DATA__
+
+
+sub Text::Balanced::gen_extract_tagged 
+	   # ($opentag, $closetag, $pre, \%options)
+{
+	use 5.005;
+
+	my $ldel = $_[0];
+	my $rdel = $_[1];
+	my $pre  = defined $_[2] ? $_[2] : '\s*';
+	my %options = defined $_[3] ? %{$_[3]} : ();
+	my $omode = defined $options{fail} ? $options{fail} : '';
+	my $bad     = ref($options{reject}) eq 'ARRAY' ? join('|', @{$options{reject}})
+		    : defined($options{reject})	       ? $options{reject}
+		    :					 ''
+		    ;
+	my $ignore  = ref($options{ignore}) eq 'ARRAY' ? join('|', @{$options{ignore}})
+		    : defined($options{ignore})	       ? $options{ignore}
+		    :					 ''
+		    ;
+	$bad    = qr/$bad/	 if $bad;
+	$ignore = qr/$ignore/	 if $ignore;
+	$pre    = qr/$pre/	 if $pre;;
+	if (!defined $ldel) { $ldel = '<\w+(?:' . delimited_pat(q{'"}) . '|[^>])*>'; }
+	$ldel   = qr/$ldel/;
+	$rdel   = qr/$rdel/ if defined $rdel;
+
+	my $closure = eval
+	{
+		sub ($$)	 # ($self, $text)
+		{
+			my $self = shift;
+			my $text = defined $_[0] ? $_[0] : defined $_ ? $_ : '';
+			my $orig = $text;
+			my @fail = (wantarray,undef,$text);
+			$@ = undef;
+
+			unless ($text =~ s/\A($pre)//s)
+				{ $@ = "Did not find prefix: /$pre/"; return _fail @fail; }
+
+			$pre = $1;
+			my $prelen = length $pre;
+
+			if (!defined $ldel) { $ldel = '<\w+(?:' . delimited_pat(q{'"}) . '|[^>])*>'; }
+
+			unless ($text =~ s/\A($ldel)//s)
+				{ $@ = "Did not find opening tag: /$ldel/"; return _fail @fail; }
+
+			my $ldellen = length($1);
+			my $rdellen = 0;
+
+			if (!defined $rdel)
+			{
+				$rdel = $1;
+				unless ($rdel =~ s/\A([[(<{]+)($XMLNAME).*/ "$1\/$2". revbracket($1) /es)
+				{
+					$@ = "Unable to construct closing tag to match: /$ldel/";
+					return _fail @fail;
+				}
+			}
+
+			my ($nexttok, $fail);
+			while (length $text)
+			{
+				next if $text =~ s/\A\\.//s;
+
+				if ($text =~ s/\A($rdel)//s )
+				{
+					$rdellen = length $1;
+					goto matched;
+				}
+				elsif ($ignore && $text =~ s/\A(?:$ignore)//s)
+				{
+					next;
+				}
+				elsif ($bad && $text =~ m/\A($bad)/s)
+				{
+					goto short if ($omode eq 'PARA' || $omode eq 'MAX');
+					$@ = "Found invalid nested tag: $1";
+					return _fail @fail;
+				}
+				elsif ($text =~ m/\A($ldel)/s)
+				{
+					if (!defined $self->extract($text))
+					{
+						goto short if ($omode eq 'PARA' || $omode eq 'MAX');
+						$@ = "Found unbalanced nested tag: $1";
+						return _fail @fail;
+					}
+				}
+				else { $text =~ s/.//s }
+			}
+
+		short:
+			if ($omode eq 'PARA')
+			{
+				my $textlen = length($text);
+				my $init = ($textlen) ? substr($orig,0,-$textlen)
+						      : substr($orig,0);
+				$init =~ s/\A(.*?\n)([ \t]*\n.*)\Z/$1/s;
+				$text = ($2||'').$text;
+			}
+			elsif ($omode ne 'MAX')
+			{
+				goto failed;
+			}
+
+		matched:
+			my $matched = substr($orig,$prelen,length($orig)-length($text)-$prelen);
+			_trace("extracted: $matched");
+			return _succeed wantarray,
+					(defined $_[0] ? $_[0] : $_),
+					$matched,
+					$text,
+					$pre,
+					substr($matched,0,$ldellen)||'',
+					($rdellen)
+						? substr($matched,$ldellen,-$rdellen)
+						: substr($matched,$ldellen),
+					($rdellen)
+						? substr($matched,-$rdellen)
+						: '';
+
+		failed:
+			$@ = "Did not find closing tag" unless $@;
+			return _fail @fail;
+		}
+
+#### THERE #####
+
+	} or die "Couldn't generate closure for gen_extract_tagged\n";
+
+	bless $closure, 'Text::Balanced::Extractor';
+}
+
+package Text::Balanced::Extractor;
+
+sub extract($$)	# ($self, $text)
+{
+	&{$_[0]}(@_);
 }
 
 1;

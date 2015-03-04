@@ -91,3 +91,22 @@ Revision history for Perl extension Text::Balanced.
 	- Altered extract_variable to accept whitespace in variables,
 	  e.g. '$ a -> {'b'}     ->  [2]'
 	  
+
+
+1.51	Sat Feb 13 10:31:55 1999
+
+	- Fixed bugs in prefix matching in extract_variable:
+	  	* incorrectly used default if '' specified
+		* now handles $#array correctly
+
+	- Fixed bugs in extract_codeblock:
+		  * Now handles !~ properly
+		  * Now handles embedded comments better.
+		  * Now handles "raw" pattern matches better.
+
+	- Added support for single strings or qr's as
+	  'reject' and 'ignore' args to extract_tagged()
+
+	- Added gen_extract_tagged() to "precompile"
+	  a specific tag extractor for repeated use
+	  (approximately 3 times faster!)
