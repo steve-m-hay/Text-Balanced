@@ -231,3 +231,9 @@ Revision history for Perl extension Text::Balanced.
 
 	- Fixed bug in certain extractions not matching strings
 	  with embedded newlines (thanks Robin)
+
+
+1.85	Sun Jun  3 07:47:18 2001
+
+	- Fixed bug in extract_variable recognizing method calls that
+	  start with an underscore (thanks Jeff)

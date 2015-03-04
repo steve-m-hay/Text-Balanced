@@ -1,5 +1,5 @@
 ==============================================================================
-                  Release of version 1.84 of Text::Balanced
+                  Release of version 1.85 of Text::Balanced
 ==============================================================================
 
 
@@ -66,11 +66,11 @@ COPYRIGHT
 
 ==============================================================================
 
-CHANGES IN VERSION 1.84
+CHANGES IN VERSION 1.85
 
 
-	- Fixed bug in certain extractions not matching strings
-	  with embedded newlines (thanks Robin)
+	- Fixed bug in extract_variable recognizing method calls that
+	  start with an underscore (thanks Jeff)
 
 
 ==============================================================================
