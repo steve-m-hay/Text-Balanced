@@ -172,3 +172,10 @@ Revision history for Perl extension Text::Balanced.
 	- Tweaked all extraction subs so they correctly handle 
 	  zero-length prefix matches after another zero-length match.
 
+
+1.77	Mon Nov 22 06:08:23 1999
+
+	- Fixed major bug in extract_codeblock (would not 
+	  terminate if there was trailing whitespace)
+
+	- Improved /.../ pattern parsing within codeblocks

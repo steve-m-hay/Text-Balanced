@@ -53,23 +53,24 @@ while (defined($str = <DATA>))
 
 __DATA__
 
+# USING: extract_codeblock($str,'<>');
+< %x = ( try => "this") >;
+< %x = () >;
+< %x = ( $try->{this}, "too") >;
+
+# THIS SHOULD FAIL
+< %x = do { $try > 10 } >;
+
 # USING: extract_codeblock($str);
 
 { $a = /\}/; };
+{ sub { $_[0] /= $_[1] } };  # / here
 { 1; };
 { $a = 1; };
 
 
 # USING: extract_codeblock($str,undef,'=*');
 ========{$a=1};
-
-# USING: extract_codeblock($str,'<>');
-< %x = () >;
-< %x = ( try => "this") >;
-< %x = ( $try->{this}, "too") >;
-
-# THIS SHOULD FAIL
-< %x = do { $try > 10 } >;
 
 # USING: extract_codeblock($str,'{}<>');
 < %x = do { $try > 10 } >;

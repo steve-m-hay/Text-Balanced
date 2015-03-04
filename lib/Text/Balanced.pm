@@ -10,7 +10,7 @@ use Exporter;
 use SelfLoader;
 use vars qw { $VERSION @ISA %EXPORT_TAGS };
 
-$VERSION = '1.76';
+$VERSION = '1.77';
 @ISA		= qw ( Exporter );
 		     
 %EXPORT_TAGS	= ( ALL => [ qw(
@@ -35,7 +35,7 @@ Exporter::export_ok_tags('ALL');
 sub _match_bracketed($$$$$$);
 sub _match_variable($$);
 sub _match_codeblock($$$$$$$);
-sub _match_quotelike($$$);
+sub _match_quotelike($$$$);
 
 # HANDLE RETURN VALUES IN VARIOUS CONTEXTS
 
@@ -213,7 +213,7 @@ sub _match_bracketed($$$$$$)	# $textref, $pre, $ldel, $qdel, $quotelike, $rdel
 			pos $$textref = $startpos;
 			return;
 		}
-		elsif ($quotelike && _match_quotelike($textref,"",0))
+		elsif ($quotelike && _match_quotelike($textref,"",1,0))
 		{
 			next;
 		}
@@ -514,17 +514,23 @@ sub _match_codeblock($$$$$$$)
 			last;
 		}
 
-		# NEED TO COVER MANY MORE CASES HERE!!!
-		if ($$textref =~ m#\G\s*(=~|!~|split|grep|map|return|;|[|]{1,2}|[&]{1,2})#gc)
+		if (_match_variable($textref,'\s*') ||
+		    _match_quotelike($textref,'\s*',$patvalid,$patvalid) )
 		{
-			$patvalid = 1;
+			$patvalid = 0;
 			next;
 		}
 
-		if (_match_variable($textref,'\s*') ||
-		    _match_quotelike($textref,'\s*',$patvalid) )
+
+		# NEED TO COVER MANY MORE CASES HERE!!!
+		if ($$textref =~ m#\G\s*( [-+*x/%^&|.]=?
+					| =(?!>)
+					| (\*\*|&&|\|\||<<|>>)=?
+					| [!=][~=]
+					| split|grep|map|return
+					)#gcx)
 		{
-			$patvalid = 0;
+			$patvalid = 1;
 			next;
 		}
 
@@ -543,7 +549,7 @@ sub _match_codeblock($$$$$$$)
 		}
 
 		$patvalid = 0;
-		$$textref =~ m/\G\s*(\w+|[-=>]>|.)/gc;
+		$$textref =~ m/\G\s*(\w+|[-=>]>|.|\Z)/gc;
 	}
 
 	unless ($matched)
@@ -579,7 +585,7 @@ sub extract_quotelike (;$$)
 	my $wantarray = wantarray;
 	my $pre  = defined $_[1] ? $_[1] : '\s*';
 
-	my @match = _match_quotelike($textref,$pre,0);
+	my @match = _match_quotelike($textref,$pre,1,0);
 	return _fail($wantarray, $textref) unless @match;
 	return _succeed($wantarray, $textref,
 			$match[2], $match[18]-$match[2],	# MATCH
@@ -589,9 +595,9 @@ sub extract_quotelike (;$$)
 		       );
 };
 
-sub _match_quotelike($$$)	# ($textref, $prepat, $allow_qmark)
+sub _match_quotelike($$$$)	# ($textref, $prepat, $allow_raw_match)
 {
-	my ($textref, $pre, $qmark) = @_;
+	my ($textref, $pre, $rawmatch, $qmark) = @_;
 
 	my ($textlen,$startpos,
 	    $oppos,
@@ -610,7 +616,9 @@ sub _match_quotelike($$$)	# ($textref, $prepat, $allow_qmark)
 
 	my $initial = substr($$textref,$oppos,1);
 
-	if ($initial && $initial =~ m|^[/\"\'\`]| || $qmark && $initial =~ m|^\?|)
+	if ($initial && $initial =~ m|^[\"\'\`]|
+		     || $rawmatch && $initial =~ m|^/|
+		     || $qmark && $initial =~ m|^\?|)
 	{
 		unless ($$textref =~ m/ \Q$initial\E [^\\$initial]* (\\.[^\\$initial]*)* \Q$initial\E /gcx)
 		{
