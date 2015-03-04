@@ -8,7 +8,7 @@ package Text::Balanced;
 use Exporter;
 use vars qw { $VERSION @ISA %EXPORT_TAGS };
 
-$VERSION = '1.41';
+$VERSION = '1.50';
 @ISA		= qw ( Exporter );
 		     
 %EXPORT_TAGS	= ( ALL => [ qw(
@@ -60,7 +60,7 @@ sub delimited_pat($;$)  # ($delimiters;$escapes)
 	{
 		my $del = quotemeta substr($dels,$i,1);
 		my $esc = quotemeta (substr($escs||'',$i,1) || $defesc);
-		push @pat, "$del(?:$esc$del|(?!$del).)*$del";
+		push @pat, "$del(?:[^$esc$del]*(?:$esc.[^$esc$del]*)*)$del";
 	}
 	my $pat = join '|', @pat;
 	return "(?:$pat)";
@@ -285,10 +285,10 @@ sub extract_variable (;$$)
 		{ $@ = "Did not find leading dereferencer";
 		  return _fail @fail; }
 
-	unless ($text =~ s/\A((?:[a-z]\w*)?::)?[_a-z]\w*//i  or extract_codeblock($text,'{}',''))
+	unless ($text =~ s/\A\s*(?:::)?(?:[_a-z]\w*::)*[_a-z]\w*//i  or extract_codeblock($text,'{}'))
 		{ $@ = "Bad identifier after dereferencer";
 		  return _fail @fail; }
-	while ($text =~ s/\A((?:[a-z]\w*)?::)?[_a-z]\w*//i or extract_codeblock($text,'{}[]()','(?:->)?')) {}
+	1 while (extract_codeblock($text,'{}[]()','\s*(?:->)?\s*'));
 
 	return _succeed wantarray,
 			(defined $_[0] ? $_[0] : $_),

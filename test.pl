@@ -6,7 +6,7 @@
 # Change 1..1 below to 1..last_test_to_print .
 # (It may become useful if the test is moved to ./t subdirectory.)
 
-BEGIN { $| = 1; print "1..50\n"; }
+BEGIN { $| = 1; print "1..53\n"; }
 END {print "not ok 1\n" unless $loaded;}
 use Text::Balanced qw ( :ALL );
 $loaded = 1;
@@ -97,10 +97,13 @@ $a->{"cat"}[1];
 @{$obj->nextval($cat,$dog)->{new}};
 @{$obj->nextval($cat?$dog:$fish)->{new}};
 @{$obj->nextval(cat()?$dog:$fish)->{new}};
+$ a {'cat'};
+$a::b::c{d}->{$e->()};
 
 # THESE SHOULD FAIL
 $a->;
 @{$;
+$ a :: b :: c
 
 # TEST EXTRACTION OF DELIMITED TEXT
 # USING: extract_delimited($str);
