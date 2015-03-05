@@ -1,5 +1,5 @@
 ==============================================================================
-                  Release of version 1.89 of Text::Balanced
+                  Release of version 1.90 of Text::Balanced
 ==============================================================================
 
 
@@ -66,10 +66,24 @@ COPYRIGHT
 
 ==============================================================================
 
-CHANGES IN VERSION 1.89
+CHANGES IN VERSION 1.90
 
 
-	- Fixed extvar.t tests
+	- Fixed subtle bug in gen_extract_tagged (thanks Martin)
+
+	- Doc fix: removed suggestion that extract_tagged defaults
+	  to matching HTML tags
+
+	- Doc fix: clarified general matching behaviour
+
+	- Fixed bug in parsing /.../ after a (
+
+	- Doc fix: documented extract_variable
+
+	- Fixed extract_variable handling of $h{qr}, $h{tr}, etc.
+	  (thanks, Briac)
+
+	- Fixed incorrect handling of $::var (thanks Tim)
 
 
 ==============================================================================
@@ -77,8 +91,5 @@ CHANGES IN VERSION 1.89
 AVAILABILITY
 
 Text::Balanced has been uploaded to the CPAN
-and is also available from:
-
-	http://www.csse.monash.edu.au/~damian/CPAN/Text-Balanced.tar.gz
 
 ==============================================================================

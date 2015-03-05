@@ -1,7 +1,7 @@
 
 use ExtUtils::MakeMaker;
 WriteMakefile(
-		NAME	=> 'Text::Balanced',
-		VERSION => '1.89',
+		NAME	=> q[Text::Balanced],
+		VERSION => q[1.90],
 
 	     );

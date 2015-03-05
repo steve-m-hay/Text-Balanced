@@ -10,7 +10,7 @@ use Exporter;
 use SelfLoader;
 use vars qw { $VERSION @ISA %EXPORT_TAGS };
 
-$VERSION = '1.89';
+$VERSION = '1.90';
 @ISA		= qw ( Exporter );
 		     
 %EXPORT_TAGS	= ( ALL => [ qw(
@@ -338,7 +338,16 @@ sub _match_tagged	# ($$$$$$$)
 	}
 	else
 	{
-		$rdelspec = eval "qq{$rdel}";
+		$rdelspec = eval "qq{$rdel}" || do {
+			my $del;
+			for (qw,~ ! ^ & * ) _ + - = } ] : " ; ' > . ? / | ',)
+				{ next if $rdel =~ /\Q$_/; $del = $_; last }
+			unless ($del) {
+				use Carp;
+				croak "Can't interpolate right delimiter $rdel"
+			}
+			eval "qq$del$rdel$del";
+		};
 	}
 
 	while (pos($$textref) < length($$textref))
@@ -440,7 +449,7 @@ sub _match_variable($$)
 		return;
 	}
 	my $varpos = pos($$textref);
-        unless ($$textref =~ m{\G\$\s*(\d+|[][&`'+*./|,";%=~:?!\@<>()-]|\^[a-z]?)}gci)
+        unless ($$textref =~ m{\G\$\s*(?!::)(\d+|[][&`'+*./|,";%=~:?!\@<>()-]|\^[a-z]?)}gci)
 	{
 	    unless ($$textref =~ m/\G((\$#?|[*\@\%]|\\&)+)/gc)
 	    {
@@ -462,6 +471,7 @@ sub _match_variable($$)
 
 	while (1)
 	{
+		next if $$textref =~ m/\G\s*(?:->)?\s*[{]\w+[}]/gc;
 		next if _match_codeblock($textref,
 					 qr/\s*->\s*(?:[_a-zA-Z]\w+\s*)?/,
 					 qr/[({[]/, qr/[)}\]]/,
@@ -578,6 +588,7 @@ sub _match_codeblock($$$$$$$)
 					| =(?!>)
 					| (\*\*|&&|\|\||<<|>>)=?
 					| split|grep|map|return
+					| [([]
 					)#gcx)
 		{
 			$patvalid = 1;
@@ -898,7 +909,7 @@ sub extract_multiple (;$$$$)	# ($text, $functions_ref, $max_fields, $ignoreunkno
 
 		FIELD: while (pos($$textref) < length($$textref))
 		{
-			my $field;
+			my ($field, $rem);
 			my @bits;
 			foreach my $i ( 0..$#func )
 			{
@@ -907,7 +918,9 @@ sub extract_multiple (;$$$$)	# ($text, $functions_ref, $max_fields, $ignoreunkno
 				$class = $class[$i];
 				$lastpos = pos $$textref;
 				if (ref($func) eq 'CODE')
-					{ ($field,undef,$pref) = @bits = $func->($$textref) }
+					{ ($field,$rem,$pref) = @bits = $func->($$textref);
+					# print "[$field|$rem]" if $field;
+					}
 				elsif (ref($func) eq 'Text::Balanced::Extractor')
 					{ @bits = $field = $func->extract($$textref) }
 				elsif( $$textref =~ m/\G$func/gc )
@@ -1046,7 +1059,7 @@ Text::Balanced - Extract delimited text sequences from strings.
 
 
  # Extract the initial substring of $text that is bounded by
- # an HTML/XML tag.
+ # an XML tag.
 
 	($extracted, $remainder) = extract_tagged($text);
 
@@ -1102,11 +1115,23 @@ Text::Balanced - Extract delimited text sequences from strings.
 
 =head1 DESCRIPTION
 
-The various C<extract_...> subroutines may be used to extract a 
-delimited string (possibly after skipping a specified prefix string).
-The search for the string always begins at the current C<pos>
-location of the string's variable (or at index zero, if no C<pos>
-position is defined).
+The various C<extract_...> subroutines may be used to
+extract a delimited substring, possibly after skipping a
+specified prefix string. By default, that prefix is
+optional whitespace (C</\s*/>), but you can change it to whatever
+you wish (see below).
+
+The substring to be extracted must appear at the
+current C<pos> location of the string's variable
+(or at index zero, if no C<pos> position is defined).
+In other words, the C<extract_...> subroutines I<don't>
+extract the first occurance of a substring anywhere
+in a string (like an unanchored regex would). Rather,
+they extract an occurance of the substring appearing
+immediately at the current matching position in the
+string (like a C<\G>-anchored regex would).
+
+
 
 =head2 General behaviour in list contexts
 
@@ -1364,6 +1389,58 @@ would correctly match something like this:
 See also: C<"extract_quotelike"> and C<"extract_codeblock">.
 
 
+=head2 C<extract_variable>
+
+C<extract_variable> extracts any valid Perl variable or
+variable-involved expression, including scalars, arrays, hashes, array
+accesses, hash look-ups, method calls through objects, subroutine calles
+through subroutine references, etc.
+
+The subroutine takes up to two optional arguments:
+
+=over 4
+
+=item 1.
+
+A string to be processed (C<$_> if the string is omitted or C<undef>)
+
+=item 2.
+
+A string specifying a pattern to be matched as a prefix (which is to be
+skipped). If omitted, optional whitespace is skipped.
+
+=back
+
+On success in a list context, an array of 3 elements is returned. The
+elements are:
+
+=over 4
+
+=item [0]
+
+the extracted variable, or variablish expression
+
+=item [1]
+
+the remainder of the input text,
+
+=item [2]
+
+the prefix substring (if any),
+
+=back
+
+On failure, all of these values (except the remaining text) are C<undef>.
+
+In a scalar context, C<extract_variable> returns just the complete
+substring that matched a variablish expression. C<undef> is returned on
+failure. In addition, the original input text has the returned substring
+(and any prefix) removed from it.
+
+In a void context, the input text just has the matched substring (and
+any specified prefix) removed.
+
+
 =head2 C<extract_tagged>
 
 C<extract_tagged> extracts and segments text between (balanced)
@@ -1381,7 +1458,7 @@ A string to be processed (C<$_> if the string is omitted or C<undef>)
 
 A string specifying a pattern to be matched as the opening tag.
 If the pattern string is omitted (or C<undef>) then a pattern
-that matches any standard HTML/XML tag is used.
+that matches any standard XML tag is used.
 
 =item 3.
 
@@ -1416,7 +1493,7 @@ that must I<not> appear within the tagged text.
 For example, to extract
 an HTML link (which should not contain nested links) use:
 
-	extract_tagged($text, '<A>', '</A>', undef, {reject => ['<A>']} );
+        extract_tagged($text, '<A>', '</A>', undef, {reject => ['<A>']} );
 
 =item C<ignore =E<gt> $listref>
 
@@ -1426,7 +1503,7 @@ that are I<not> be be treated as nested tags within the tagged text
 
 For example, to extract an arbitrary XML tag, but ignore "empty" elements:
 
-	extract_tagged($text, undef, undef, undef, {ignore => ['<[^>]*/>']} );
+        extract_tagged($text, undef, undef, undef, {ignore => ['<[^>]*/>']} );
 
 (also see L<"gen_delimited_pat"> below).
 
@@ -1449,22 +1526,22 @@ For example, suppose the start tag "/para" introduces a paragraph, which then
 continues until the next "/endpara" tag or until another "/para" tag is
 encountered:
 
-	$text = "/para line 1\n\nline 3\n/para line 4";
+        $text = "/para line 1\n\nline 3\n/para line 4";
 
-	extract_tagged($text, '/para', '/endpara', undef,
-				{reject => '/para', fail => MAX );
+        extract_tagged($text, '/para', '/endpara', undef,
+                                {reject => '/para', fail => MAX );
 
-	# EXTRACTED: "/para line 1\n\nline 3\n"
+        # EXTRACTED: "/para line 1\n\nline 3\n"
 
 Suppose instead, that if no matching "/endpara" tag is found, the "/para"
 tag refers only to the immediately following paragraph:
 
-	$text = "/para line 1\n\nline 3\n/para line 4";
+        $text = "/para line 1\n\nline 3\n/para line 4";
 
-	extract_tagged($text, '/para', '/endpara', undef,
-			{reject => '/para', fail => MAX );
+        extract_tagged($text, '/para', '/endpara', undef,
+                        {reject => '/para', fail => MAX );
 
-	# EXTRACTED: "/para line 1\n"
+        # EXTRACTED: "/para line 1\n"
 
 Note that the specified C<fail> behaviour applies to nested tags as well.
 
@@ -1547,12 +1624,12 @@ be extracted from).
 In other words, the implementation of C<extract_tagged> is exactly
 equivalent to:
 
-	sub extract_tagged
-	{
-		my $text = shift;
-		$extractor = gen_extract_tagged(@_);
-		return $extractor->($text);
-	}
+        sub extract_tagged
+        {
+                my $text = shift;
+                $extractor = gen_extract_tagged(@_);
+                return $extractor->($text);
+        }
 
 (although C<extract_tagged> is not currently implemented that way, in order
 to preserve pre-5.005 compatibility).
@@ -1571,13 +1648,13 @@ L<perlop(3)>) Nested backslashed delimiters, embedded balanced bracket
 delimiters (for the quotelike operators), and trailing modifiers are
 all caught. For example, in:
 
-	extract_quotelike 'q # an octothorpe: \# (not the end of the q!) #'
-	
-	extract_quotelike '  "You said, \"Use sed\"."  '
+        extract_quotelike 'q # an octothorpe: \# (not the end of the q!) #'
+        
+        extract_quotelike '  "You said, \"Use sed\"."  '
 
-	extract_quotelike ' s{([A-Z]{1,8}\.[A-Z]{3})} /\L$1\E/; '
+        extract_quotelike ' s{([A-Z]{1,8}\.[A-Z]{3})} /\L$1\E/; '
 
-	extract_quotelike ' tr/\\\/\\\\/\\\//ds; '
+        extract_quotelike ' tr/\\\/\\\\/\\\//ds; '
 
 the full Perl quotelike operations are all extracted correctly.
 
@@ -1585,17 +1662,17 @@ Note too that, when using the /x modifier on a regex, any comment
 containing the current pattern delimiter will cause the regex to be
 immediately terminated. In other words:
 
-	'm /
-		(?i)		# CASE INSENSITIVE
-		[a-z_]		# LEADING ALPHABETIC/UNDERSCORE
-		[a-z0-9]*	# FOLLOWED BY ANY NUMBER OF ALPHANUMERICS
-	   /x'
+        'm /
+                (?i)            # CASE INSENSITIVE
+                [a-z_]          # LEADING ALPHABETIC/UNDERSCORE
+                [a-z0-9]*       # FOLLOWED BY ANY NUMBER OF ALPHANUMERICS
+           /x'
 
 will be extracted as if it were:
 
-	'm /
-		(?i)		# CASE INSENSITIVE
-		[a-z_]		# LEADING ALPHABETIC/'
+        'm /
+                (?i)            # CASE INSENSITIVE
+                [a-z_]          # LEADING ALPHABETIC/'
 
 This behaviour is identical to that of the actual compiler.
 
@@ -1672,27 +1749,27 @@ prefix) removed.
 
 Examples:
 
-	# Remove the first quotelike literal that appears in text
+        # Remove the first quotelike literal that appears in text
 
-		$quotelike = extract_quotelike($text,'.*?');
+                $quotelike = extract_quotelike($text,'.*?');
 
-	# Replace one or more leading whitespace-separated quotelike
-	# literals in $_ with "<QLL>"
+        # Replace one or more leading whitespace-separated quotelike
+        # literals in $_ with "<QLL>"
 
-		do { $_ = join '<QLL>', (extract_quotelike)[2,1] } until $@;
+                do { $_ = join '<QLL>', (extract_quotelike)[2,1] } until $@;
 
 
-	# Isolate the search pattern in a quotelike operation from $text
+        # Isolate the search pattern in a quotelike operation from $text
 
-		($op,$pat) = (extract_quotelike $text)[3,5];
-		if ($op =~ /[ms]/)
-		{
-			print "search pattern: $pat\n";
-		}
-		else
-		{
-			print "$op is not a pattern matching operation\n";
-		}
+                ($op,$pat) = (extract_quotelike $text)[3,5];
+                if ($op =~ /[ms]/)
+                {
+                        print "search pattern: $pat\n";
+                }
+                else
+                {
+                        print "$op is not a pattern matching operation\n";
+                }
 
 
 =head2 C<extract_quotelike> and "here documents"
@@ -1707,7 +1784,7 @@ here document might look like this:
         <<'EOMSG' || die;
         This is the message.
         EOMSG
-	exit;
+        exit;
 
 Given this as an input string in a scalar context, C<extract_quotelike>
 would correctly return the string "<<'EOMSG'\nThis is the message.\nEOMSG",
@@ -1768,7 +1845,7 @@ rearranges the string to an equivalent piece of Perl:
         This is the message.
         EOMSG
         || die;
-	exit;
+        exit;
 
 in which the here document I<is> contiguous. It still leaves the
 matching position after the here document, but now the rest of the line

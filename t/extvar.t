@@ -65,6 +65,7 @@ $a->;
 $a (1..3) { print $a };
 
 # USING: extract_variable($str);
+$::obj;
 $obj->nextval;
 *var;
 *$var;
