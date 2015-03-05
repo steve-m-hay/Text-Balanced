@@ -1,18 +1,19 @@
-Build.PL
 Changes
-MANIFEST
-META.yml # Will be created by "make dist"
-Makefile.PL
-README
 lib/Text/Balanced.pm
-t/00.load.t
-t/pod-coverage.t
-t/pod.t
-t/extbrk.t
-t/extcbk.t
-t/extdel.t
-t/extmul.t
-t/extqlk.t
-t/exttag.t
-t/extvar.t
-t/gentag.t
+LICENSE
+Makefile.PL
+MANIFEST			This list of files
+README
+t/01_compile.t
+t/02_extbrk.t
+t/03_extcbk.t
+t/04_extdel.t
+t/05_extmul.t
+t/06_extqlk.t
+t/07_exttag.t
+t/08_extvar.t
+t/09_gentag.t
+t/97_meta.t
+t/98_pod.t
+t/99_pmv.t
+META.yml                                 Module meta-data (added by MakeMaker)
