@@ -1,5 +1,5 @@
 ==============================================================================
-                  Release of version 1.86 of Text::Balanced
+                  Release of version 1.87 of Text::Balanced
 ==============================================================================
 
 
@@ -66,14 +66,15 @@ COPYRIGHT
 
 ==============================================================================
 
-CHANGES IN VERSION 1.86
+CHANGES IN VERSION 1.87
 
 
-	- Revised licence for inclusion in core distribution
+	- Made extract_multiple aware of skipped prefixes returned
+	  by subroutine extractors (such as extract_quotelike, etc.)
 
-	- Consolidated POD in .pm file
+	- Made extract_variable aware of punctuation variables
 
-	- renamed tests to let DOS cope with them
+	- Corified tests
 
 
 ==============================================================================
