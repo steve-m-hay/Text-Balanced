@@ -1,5 +1,5 @@
 ==============================================================================
-                  Release of version 1.94 of Text::Balanced
+                  Release of version 1.95 of Text::Balanced
 ==============================================================================
 
 
@@ -66,10 +66,12 @@ COPYRIGHT
 
 ==============================================================================
 
-CHANGES IN VERSION 1.94
+CHANGES IN VERSION 1.95
 
 
-	- rereleased in attempt to fix CPAN problems
+	- Constrainted _match_quote to only match at word boundaries
+	  (so "exemplum(hic)" doesn't match "m(hic)")
+	  (thanks Craig)
 
 
 ==============================================================================

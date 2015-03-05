@@ -2,6 +2,6 @@
 use ExtUtils::MakeMaker;
 WriteMakefile(
 		NAME	=> q[Text::Balanced],
-		VERSION => q[1.94],
+		VERSION => q[1.95],
 
 	     );

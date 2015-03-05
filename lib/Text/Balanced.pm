@@ -10,7 +10,7 @@ use Exporter;
 use SelfLoader;
 use vars qw { $VERSION @ISA %EXPORT_TAGS };
 
-$VERSION = '1.94';
+$VERSION = '1.95';
 @ISA		= qw ( Exporter );
 		     
 %EXPORT_TAGS	= ( ALL => [ qw(
@@ -719,7 +719,7 @@ sub _match_quotelike($$$$)	# ($textref, $prepat, $allow_raw_match)
 		       );
 	}
 
-	unless ($$textref =~ m{\G((?:m|s|qq|qx|qw|q|qr|tr|y)\b(?=\s*\S)|<<)}gc)
+	unless ($$textref =~ m{\G(\b(?:m|s|qq|qx|qw|q|qr|tr|y)\b(?=\s*\S)|<<)}gc)
 	{
 		_failmsg q{No quotelike operator found after prefix at "} .
 			     substr($$textref, pos($$textref), 20) .

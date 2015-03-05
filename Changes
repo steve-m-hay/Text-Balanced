@@ -292,3 +292,10 @@ Revision history for Perl extension Text::Balanced.
 1.94	Sun Apr 13 02:18:41 2003
 
 	- rereleased in attempt to fix CPAN problems
+
+
+1.95	Mon Apr 28 00:22:04 2003
+
+	- Constrainted _match_quote to only match at word boundaries
+	  (so "exemplum(hic)" doesn't match "m(hic)")
+	  (thanks Craig)
