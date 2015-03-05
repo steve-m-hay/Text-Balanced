@@ -10,7 +10,7 @@ use Exporter;
 use SelfLoader;
 use vars qw { $VERSION @ISA %EXPORT_TAGS };
 
-$VERSION    = 1.98;
+use version; $VERSION = qv('1.99.0');
 @ISA		= qw ( Exporter );
 		     
 %EXPORT_TAGS	= ( ALL => [ qw(
@@ -328,7 +328,7 @@ sub _match_tagged	# ($$$$$$$)
 
 	if (!defined $rdel)
 	{
-		$rdelspec = $&;
+		$rdelspec = substr($$textref, $-[0], $+[0] - $-[0]);
 		unless ($rdelspec =~ s/\A([[(<{]+)($XMLNAME).*/ quotemeta "$1\/$2". _revbracket($1) /oes)
 		{
 			_failmsg "Unable to construct closing tag to match: $rdel",
@@ -924,7 +924,10 @@ sub extract_multiple (;$$$$)	# ($text, $functions_ref, $max_fields, $ignoreunkno
 				elsif (ref($func) eq 'Text::Balanced::Extractor')
 					{ @bits = $field = $func->extract($$textref) }
 				elsif( $$textref =~ m/\G$func/gc )
-					{ @bits = $field = defined($1) ? $1 : $& }
+					{ @bits = $field = defined($1)
+                                ? $1
+                                : substr($$textref, $-[0], $+[0] - $-[0])
+                    }
 				$pref ||= "";
 				if (defined($field) && length($field))
 				{

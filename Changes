@@ -319,3 +319,11 @@ Revision history for Perl extension Text::Balanced.
 1.98  Fri May  5 14:58:49 2006
 
     - Reinstated full test suite (thanks Steve!)
+
+
+
+1.99.0  Thu Nov 16 07:32:06 2006
+
+    - Removed reliance on expensive $& variable (thanks John)
+
+    - Made Makefile.PL play nice with core versions (thanks Schwern!)

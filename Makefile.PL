@@ -7,6 +7,7 @@ WriteMakefile(
     AUTHOR              => 'Damian Conway <DCONWAY@CPAN.org>',
     VERSION_FROM        => 'lib/Text/Balanced.pm',
     ABSTRACT_FROM       => 'lib/Text/Balanced.pm',
+    INSTALLDIRS         => ($] >= 5.007003 ? 'perl' : 'site'),
     PL_FILES            => {},
     PREREQ_PM => {
         'Test::More' => 0,

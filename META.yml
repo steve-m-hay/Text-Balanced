@@ -1,9 +1,9 @@
 # http://module-build.sourceforge.net/META-spec.html
 #XXXXXXX This is a prototype!!!  It will change in the future!!! XXXXX#
 name:         Text-Balanced
-version:      1.98
+version:      v1.99.0
 version_from: lib/Text/Balanced.pm
-installdirs:  site
+installdirs:  perl
 requires:
     Test::More:                    0
 
