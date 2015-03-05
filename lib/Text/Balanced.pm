@@ -10,7 +10,7 @@ use Exporter;
 use SelfLoader;
 use vars qw { $VERSION @ISA %EXPORT_TAGS };
 
-$VERSION = '1.91';
+$VERSION = '1.94';
 @ISA		= qw ( Exporter );
 		     
 %EXPORT_TAGS	= ( ALL => [ qw(

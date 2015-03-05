@@ -287,3 +287,8 @@ Revision history for Perl extension Text::Balanced.
 	- Fixed error count on t/extract_variable.t
 
 	- Fixed bug in extract_codelike when non-standard delimiters used
+
+
+1.94	Sun Apr 13 02:18:41 2003
+
+	- rereleased in attempt to fix CPAN problems

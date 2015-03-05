@@ -1,5 +1,5 @@
 ==============================================================================
-                  Release of version 1.91 of Text::Balanced
+                  Release of version 1.94 of Text::Balanced
 ==============================================================================
 
 
@@ -66,12 +66,10 @@ COPYRIGHT
 
 ==============================================================================
 
-CHANGES IN VERSION 1.91
+CHANGES IN VERSION 1.94
 
 
-	- Fixed error count on t/extract_variable.t
-
-	- Fixed bug in extract_codelike when non-standard delimiters used
+	- rereleased in attempt to fix CPAN problems
 
 
 ==============================================================================
