@@ -34,7 +34,7 @@ while (defined($str = <DATA>))
 	$str =~ s/\\n/\n/g;
 	my $orig = $str;
 
-	eval $setup_cmd if $setup_cmd ne ''; 
+	eval $setup_cmd if $setup_cmd ne '';
 	if($tests =~ /l/) {
 		debug "\tUsing: $cmd\n";
 		debug "\t   on: [" . esc($setup_cmd) . "][" . esc($str) . "]\n";
@@ -71,7 +71,7 @@ print "not " if $z[0] eq '';
 print "ok ", $count++;
 print "\n";
 
- 
+
 __DATA__
 
 # USING: extract_quotelike($str);
@@ -92,9 +92,9 @@ __DATA__
 <<""; done()\nline1\nline2\n\n and next
 <<; done()\nline1\nline2\n\n and next
 # fails in Text::Balanced 1.95
-<<EOHERE;\nEOHERE\n; 
+<<EOHERE;\nEOHERE\n;
 # fails in Text::Balanced 1.95
-<<"*";\n\n*\n; 
+<<"*";\n\n*\n;
 
 "this is a nested $var[$x] {";
 /a/gci;

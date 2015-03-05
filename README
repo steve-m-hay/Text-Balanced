@@ -517,7 +517,7 @@ DESCRIPTION
     example, in:
 
             extract_quotelike 'q # an octothorpe: \# (not the end of the q!) #'
-            
+
         extract_quotelike '  "You said, \"Use sed\"."  '
 
             extract_quotelike ' s{([A-Z]{1,8}\.[A-Z]{3})} /\L$1\E/; '
