@@ -1,13 +1,10 @@
+Build.PL
 Changes
 MANIFEST
+META.yml # Will be created by "make dist"
 Makefile.PL
 README
 lib/Text/Balanced.pm
-t/extbrk.t
-t/extcbk.t
-t/extdel.t
-t/extmul.t
-t/extqlk.t
-t/exttag.t
-t/extvar.t
-t/gentag.t
+t/00.load.t
+t/pod-coverage.t
+t/pod.t

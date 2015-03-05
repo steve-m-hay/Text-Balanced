@@ -10,7 +10,7 @@ use Exporter;
 use SelfLoader;
 use vars qw { $VERSION @ISA %EXPORT_TAGS };
 
-$VERSION = '1.95';
+$VERSION = '1.97';
 @ISA		= qw ( Exporter );
 		     
 %EXPORT_TAGS	= ( ALL => [ qw(
@@ -48,7 +48,7 @@ sub _fail
 {
 	my ($wantarray, $textref, $message, $pos) = @_;
 	_failmsg $message, $pos if $message;
-	return ("",$$textref,"") if $wantarray;
+	return (undef,$$textref,undef) if $wantarray;
 	return undef;
 }
 
@@ -57,7 +57,7 @@ sub _succeed
 	$@ = undef;
 	my ($wantarray,$textref) = splice @_, 0, 2;
 	my ($extrapos, $extralen) = @_>18 ? splice(@_, -2, 2) : (0,0);
-	my ($startlen) = $_[5];
+	my ($startlen, $oppos) = @_[5,6];
 	my $remainderpos = $_[2];
 	if ($wantarray)
 	{
@@ -67,7 +67,7 @@ sub _succeed
 			push @res, substr($$textref,$from,$len);
 		}
 		if ($extralen) {	# CORRECT FILLET
-			my $extra = substr($res[0], $extrapos-$startlen, $extralen, "\n");
+			my $extra = substr($res[0], $extrapos-$oppos, $extralen, "\n");
 			$res[1] = "$extra$res[1]";
 			eval { substr($$textref,$remainderpos,0) = $extra;
 			       substr($$textref,$extrapos,$extralen,"\n")} ;
@@ -266,7 +266,7 @@ sub _match_bracketed($$$$$$)	# $textref, $pre, $ldel, $qdel, $quotelike, $rdel
 	       );
 }
 
-sub revbracket($)
+sub _revbracket($)
 {
 	my $brack = reverse $_[0];
 	$brack =~ tr/[({</])}>/;
@@ -329,7 +329,7 @@ sub _match_tagged	# ($$$$$$$)
 	if (!defined $rdel)
 	{
 		$rdelspec = $&;
-		unless ($rdelspec =~ s/\A([[(<{]+)($XMLNAME).*/ quotemeta "$1\/$2". revbracket($1) /oes)
+		unless ($rdelspec =~ s/\A([[(<{]+)($XMLNAME).*/ quotemeta "$1\/$2". _revbracket($1) /oes)
 		{
 			_failmsg "Unable to construct closing tag to match: $rdel",
 				 pos $$textref;
@@ -719,7 +719,8 @@ sub _match_quotelike($$$$)	# ($textref, $prepat, $allow_raw_match)
 		       );
 	}
 
-	unless ($$textref =~ m{\G(\b(?:m|s|qq|qx|qw|q|qr|tr|y)\b(?=\s*\S)|<<)}gc)
+	unless ($$textref =~
+    m{\G(\b(?:m|s|qq|qx|qw|q|qr|tr|y)\b(?=\s*\S)|<<(?=\s*["'A-Za-z_]))}gc)
 	{
 		_failmsg q{No quotelike operator found after prefix at "} .
 			     substr($$textref, pos($$textref), 20) .
@@ -748,8 +749,8 @@ sub _match_quotelike($$$$)	# ($textref, $prepat, $allow_raw_match)
 		}
 		my $extrapos = pos($$textref);
 		$$textref =~ m{.*\n}gc;
-		$str1pos = pos($$textref);
-		unless ($$textref =~ m{.*?\n(?=$label\n)}gc) {
+		$str1pos = pos($$textref)--;
+		unless ($$textref =~ m{.*?\n(?=\Q$label\E\n)}gc) {
 			_failmsg qq{Missing here doc terminator ('$label') after "} .
 				     substr($$textref, $startpos, 20) .
 				     q{..."},
@@ -758,7 +759,7 @@ sub _match_quotelike($$$$)	# ($textref, $prepat, $allow_raw_match)
 			return;
 		}
 		$rd1pos = pos($$textref);
-		$$textref =~ m{$label\n}gc;
+        $$textref =~ m{\Q$label\E\n}gc;
 		$ld2pos = pos($$textref);
 		return (
 			$startpos,	$oppos-$startpos,	# PREFIX
@@ -791,7 +792,7 @@ sub _match_quotelike($$$$)	# ($textref, $prepat, $allow_raw_match)
 	if ($ldel1 =~ /[[(<{]/)
 	{
 		$rdel1 =~ tr/[({</])}>/;
-		_match_bracketed($textref,"",$ldel1,"","",$rdel1)
+		defined(_match_bracketed($textref,"",$ldel1,"","",$rdel1))
 		|| do { pos $$textref = $startpos; return };
 	}
 	else
@@ -826,7 +827,7 @@ sub _match_quotelike($$$$)	# ($textref, $prepat, $allow_raw_match)
 		if ($ldel2 =~ /[[(<{]/)
 		{
 			pos($$textref)--;	# OVERCOME BROKEN LOOKAHEAD 
-			_match_bracketed($textref,"",$ldel2,"","",$rdel2)
+			defined(_match_bracketed($textref,"",$ldel2,"","",$rdel2))
 			|| do { pos $$textref = $startpos; return };
 		}
 		else
@@ -919,9 +920,7 @@ sub extract_multiple (;$$$$)	# ($text, $functions_ref, $max_fields, $ignoreunkno
 				$class = $class[$i];
 				$lastpos = pos $$textref;
 				if (ref($func) eq 'CODE')
-					{ ($field,$rem,$pref) = @bits = $func->($$textref);
-					# print "[$field|$rem]" if $field;
-					}
+					{ ($field,$rem,$pref) = @bits = $func->($$textref) }
 				elsif (ref($func) eq 'Text::Balanced::Extractor')
 					{ @bits = $field = $func->extract($$textref) }
 				elsif( $$textref =~ m/\G$func/gc )
@@ -930,7 +929,7 @@ sub extract_multiple (;$$$$)	# ($text, $functions_ref, $max_fields, $ignoreunkno
 				if (defined($field) && length($field))
 				{
 					if (!$igunk) {
-						$unkpos = pos $$textref
+						$unkpos = $lastpos
 							if length($pref) && !defined($unkpos);
 						if (defined $unkpos)
 						{
@@ -1144,7 +1143,7 @@ elements of which are always:
 =item [0]
 
 The extracted string, including the specified delimiters.
-If the extraction fails an empty string is returned.
+If the extraction fails C<undef> is returned.
 
 =item [1]
 
@@ -1154,7 +1153,7 @@ extracted string). On failure, the entire string is returned.
 =item [2]
 
 The skipped prefix (i.e. the characters before the extracted string).
-On failure, the empty string is returned.
+On failure, C<undef> is returned.
 
 =back 
 
@@ -2140,9 +2139,10 @@ If more delimiters than escape chars are specified, the last escape char
 is used for the remaining delimiters.
 If no escape char is specified for a given specified delimiter, '\' is used.
 
-Note that 
-C<gen_delimited_pat> was previously called
-C<delimited_pat>. That name may still be used, but is now deprecated.
+=head2 C<delimited_pat>
+
+Note that C<gen_delimited_pat> was previously called C<delimited_pat>.
+That name may still be used, but is now deprecated.
         
 
 =head1 DIAGNOSTICS

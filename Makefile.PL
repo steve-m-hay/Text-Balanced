@@ -1,7 +1,16 @@
-
+use strict;
+use warnings;
 use ExtUtils::MakeMaker;
-WriteMakefile(
-		NAME	=> q[Text::Balanced],
-		VERSION => q[1.95],
 
-	     );
+WriteMakefile(
+    NAME                => 'Text::Balanced',
+    AUTHOR              => 'Damian Conway <DCONWAY@CPAN.org>',
+    VERSION_FROM        => 'lib/Text/Balanced.pm',
+    ABSTRACT_FROM       => 'lib/Text/Balanced.pm',
+    PL_FILES            => {},
+    PREREQ_PM => {
+        'Test::More' => 0,
+    },
+    dist                => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
+    clean               => { FILES => 'Text-Balanced-*' },
+);
