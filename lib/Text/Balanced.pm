@@ -10,7 +10,7 @@ use SelfLoader;
 
 use vars qw { $VERSION @ISA %EXPORT_TAGS };
 BEGIN {
-	$VERSION     = '2.01';
+	$VERSION     = '2.02';
 	@ISA         = 'Exporter';
 	%EXPORT_TAGS = (
 		ALL => [ qw{
@@ -2273,7 +2273,7 @@ Bug reports and other feedback are most welcome.
 
 Copyright 1997 - 2001 Damian Conway. All Rights Reserved.
 
-Some parts copyright 2009 Adam Kennedy.
+Some (minor) parts copyright 2009 Adam Kennedy.
 
 This module is free software. It may be used, redistributed
 and/or modified under the same terms as Perl itself.

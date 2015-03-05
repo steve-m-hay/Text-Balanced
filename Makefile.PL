@@ -2,7 +2,7 @@ use strict;
 use vars qw{$VERSION};
 BEGIN {
 	require 5.003_96;
-	$VERSION = '2.01';
+	$VERSION = '2.02';
 }
 use ExtUtils::MakeMaker;
 
@@ -17,7 +17,7 @@ WriteMakefile(
 		($^O eq 'MSWin32' ? () : ('Test::More' => '0.47')),
 	},
 	($] >= 5.005 ? (
-		AUTHOR  => 'Damian Conway <adamk@cpan.org>',
+		AUTHOR  => 'Adam Kennedy <adamk@cpan.org>',
 	) : ()),
 	($ExtUtils::MakeMaker::VERSION ge '6.30_00' ? (
 		LICENSE => 'perl',

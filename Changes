@@ -1,5 +1,11 @@
 Revision history for Perl extension Text-Balanced.
 
+2.02   Thu 20 Jul 2009
+	- Fixed the mixed "Damian Conway <adamk@cpan.org>" AUTHOR setting.
+	  For the record, I am NOT the author, I'm just the maintainer.
+	  Unfortunately, Makefile.PL does not have a MAINTAINER setting and
+	  this way all the emails about this module come to me.
+
 2.01   Tue 28 Jul 2009
 	- Taken over by Adam Kennedy to move it to a long-term maintenance mode
 	- Removing use warnings to restore 5.005 compatibility
