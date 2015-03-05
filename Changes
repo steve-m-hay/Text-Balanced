@@ -280,3 +280,10 @@ Revision history for Perl extension Text::Balanced.
 	  (thanks, Briac)
 
 	- Fixed incorrect handling of $::var (thanks Tim)
+
+
+1.91	Fri Mar 28 23:19:17 2003
+
+	- Fixed error count on t/extract_variable.t
+
+	- Fixed bug in extract_codelike when non-standard delimiters used

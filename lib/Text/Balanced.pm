@@ -10,7 +10,7 @@ use Exporter;
 use SelfLoader;
 use vars qw { $VERSION @ISA %EXPORT_TAGS };
 
-$VERSION = '1.90';
+$VERSION = '1.91';
 @ISA		= qw ( Exporter );
 		     
 %EXPORT_TAGS	= ( ALL => [ qw(
@@ -583,7 +583,8 @@ sub _match_codeblock($$$$$$$)
 
 
 		# NEED TO COVER MANY MORE CASES HERE!!!
-		if ($$textref =~ m#\G\s*( [-+*x/%^&|.]=?
+		if ($$textref =~ m#\G\s*(?!$ldel_inner)
+					( [-+*x/%^&|.]=?
 					| [!=]~
 					| =(?!>)
 					| (\*\*|&&|\|\||<<|>>)=?
