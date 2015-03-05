@@ -8,3 +8,11 @@ lib/Text/Balanced.pm
 t/00.load.t
 t/pod-coverage.t
 t/pod.t
+t/extbrk.t
+t/extcbk.t
+t/extdel.t
+t/extmul.t
+t/extqlk.t
+t/exttag.t
+t/extvar.t
+t/gentag.t
