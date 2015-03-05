@@ -237,3 +237,12 @@ Revision history for Perl extension Text::Balanced.
 
 	- Fixed bug in extract_variable recognizing method calls that
 	  start with an underscore (thanks Jeff)
+
+
+1.86	Mon Sep  3 06:57:08 2001
+
+	- Revised licence for inclusion in core distribution
+
+	- Consolidated POD in .pm file
+
+	- renamed tests to let DOS cope with them
