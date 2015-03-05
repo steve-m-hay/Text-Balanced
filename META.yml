@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:               Text-Balanced
-version:            2.02
+version:            2.03
 abstract:           Extract delimited text sequences from strings
 author:
     - Adam Kennedy <adamk@cpan.org>
