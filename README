@@ -1,5 +1,5 @@
 ==============================================================================
-                  Release of version 1.87 of Text::Balanced
+                  Release of version 1.89 of Text::Balanced
 ==============================================================================
 
 
@@ -66,15 +66,10 @@ COPYRIGHT
 
 ==============================================================================
 
-CHANGES IN VERSION 1.87
+CHANGES IN VERSION 1.89
 
 
-	- Made extract_multiple aware of skipped prefixes returned
-	  by subroutine extractors (such as extract_quotelike, etc.)
-
-	- Made extract_variable aware of punctuation variables
-
-	- Corified tests
+	- Fixed extvar.t tests
 
 
 ==============================================================================
