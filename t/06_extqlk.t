@@ -2,17 +2,22 @@
 # Before `make install' is performed this script should be runnable with
 # `make test'. After `make install' it should work as `perl test.pl'
 
+use 5.008001;
+
+use strict;
+
 ######################### We start with some black magic to print on failure.
 
 # Change 1..1 below to 1..last_test_to_print .
 # (It may become useful if the test is moved to ./t subdirectory.)
 
+my $loaded = 0;
 BEGIN { $| = 1; print "1..95\n"; }
 END {print "not ok 1\n" unless $loaded;}
 use Text::Balanced qw ( extract_quotelike );
 $loaded = 1;
 print "ok 1\n";
-$count=2;
+my $count=2;
 use vars qw( $DEBUG );
 #$DEBUG=1;
 sub debug { print "\t>>>",@_ if $ENV{DEBUG} }
@@ -20,9 +25,11 @@ sub esc   { my $x = shift||'<undef>'; $x =~ s/\n/\\n/gs; $x }
 
 ######################### End of black magic.
 
+## no critic (BuiltinFunctions::ProhibitStringyEval)
 
-$cmd = "print";
-$neg = 0;
+my $cmd = "print";
+my $neg = 0;
+my $str;
 while (defined($str = <DATA>))
 {
 	chomp $str;
@@ -53,7 +60,7 @@ while (defined($str = <DATA>))
 		$str = $orig;
 		debug "\tUsing: scalar $cmd\n";
 		debug "\t   on: [" . esc($str) . "]\n";
-		$var = eval $cmd;
+		my $var = eval $cmd;
 		print " ($@)" if $@ && $DEBUG;
 		$var = "<undef>" unless defined $var;
 		debug "\t scalar got: [" . esc($var) . "]\n";

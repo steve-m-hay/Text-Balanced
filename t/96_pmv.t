@@ -2,11 +2,12 @@
 
 # Test that our declared minimum Perl version matches our syntax
 
+use 5.008001;
+
 use strict;
-BEGIN {
-	$|  = 1;
-	$^W = 1;
-}
+use warnings;
+
+use Test::More;
 
 my @MODULES = (
 	'Perl::MinimumVersion 1.20',
@@ -15,17 +16,16 @@ my @MODULES = (
 
 # Don't run tests for installs
 use Test::More;
-unless ( $ENV{AUTOMATED_TESTING} or $ENV{RELEASE_TESTING} ) {
-	plan( skip_all => "Author tests not required for installation" );
+unless ( $ENV{AUTHOR_TESTING} ) {
+	plan( skip_all => "Author testing only" );
 }
 
 # Load the testing modules
 foreach my $MODULE ( @MODULES ) {
+	## no critic (BuiltinFunctions::ProhibitStringyEval)
 	eval "use $MODULE";
 	if ( $@ ) {
-		$ENV{RELEASE_TESTING}
-		? die( "Failed to load required release-testing module $MODULE" )
-		: plan( skip_all => "$MODULE not available for testing" );
+		plan( skip_all => "$MODULE not available for testing" );
 	}
 }
 

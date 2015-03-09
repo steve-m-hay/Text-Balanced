@@ -3,7 +3,7 @@ package Text::Balanced;
 # EXTRACT VARIOUSLY DELIMITED TEXT SEQUENCES FROM STRINGS.
 # FOR FULL DOCUMENTATION SEE Balanced.pod
 
-use 5.005;
+use 5.008001;
 use strict;
 use Exporter ();
 use SelfLoader;
@@ -30,6 +30,8 @@ BEGIN {
 
 Exporter::export_ok_tags('ALL');
 
+## no critic (Subroutines::ProhibitSubroutinePrototypes)
+
 # PROTOTYPES
 
 sub _match_bracketed($$$$$$);
@@ -51,7 +53,7 @@ sub _fail {
 	my ($wantarray, $textref, $message, $pos) = @_;
 	_failmsg $message, $pos if $message;
 	return (undef, $$textref, undef) if $wantarray;
-	return undef;
+	return;
 }
 
 sub _succeed {
@@ -335,6 +337,7 @@ sub _match_tagged	# ($$$$$$$)
 	}
 	else
 	{
+		## no critic (BuiltinFunctions::ProhibitStringyEval)
 		$rdelspec = eval "qq{$rdel}" || do {
 			my $del;
 			for (qw,~ ! ^ & * ) _ + - = } ] : " ; ' > . ? / | ',)
@@ -889,11 +892,10 @@ sub extract_multiple (;$$$$)	# ($text, $functions_ref, $max_fields, $ignoreunkno
 		}
 
 		my $unkpos;
-		my $func;
 		my $class;
 
 		my @class;
-		foreach $func ( @func )
+		foreach my $func ( @func )
 		{
 			if (ref($func) eq 'HASH')
 			{
@@ -913,7 +915,7 @@ sub extract_multiple (;$$$$)	# ($text, $functions_ref, $max_fields, $ignoreunkno
 			foreach my $i ( 0..$#func )
 			{
 				my $pref;
-				$func = $func[$i];
+				my $func = $func[$i];
 				$class = $class[$i];
 				$lastpos = pos $$textref;
 				if (ref($func) eq 'CODE')

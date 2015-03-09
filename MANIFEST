@@ -1,19 +1,20 @@
-Changes
-lib/Text/Balanced.pm
-LICENSE
-Makefile.PL
-MANIFEST			This list of files
-README
-t/01_compile.t
-t/02_extbrk.t
-t/03_extcbk.t
-t/04_extdel.t
-t/05_extmul.t
-t/06_extqlk.t
-t/07_exttag.t
-t/08_extvar.t
-t/09_gentag.t
-t/97_meta.t
-t/98_pod.t
-t/99_pmv.t
-META.yml                                 Module meta-data (added by MakeMaker)
+Changes                                  Change log
+LICENSE                                  The Licence
+Makefile.PL                              ExtUtils::MakeMaker script
+MANIFEST                                 This file
+README                                   A brief overview of the distribution
+lib/Text/Balanced.pm                     Text::Balanced module
+t/01_compile.t                           Test script
+t/02_extbrk.t                            Test script
+t/03_extcbk.t                            Test script
+t/04_extdel.t                            Test script
+t/05_extmul.t                            Test script
+t/06_extqlk.t                            Test script
+t/07_exttag.t                            Test script
+t/08_extvar.t                            Test script
+t/09_gentag.t                            Test script
+t/94_changes.t                           Test script
+t/95_critic.t                            Test script
+t/96_pmv.t                               Test script
+t/97_pod.t                               Test script
+t/98_pod_coverage.t                      Test script
