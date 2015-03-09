@@ -10,7 +10,7 @@ use SelfLoader;
 
 use vars qw { $VERSION @ISA %EXPORT_TAGS };
 BEGIN {
-	$VERSION     = '2.03';
+	$VERSION     = '2.04';
 	@ISA         = 'Exporter';
 	%EXPORT_TAGS = (
 		ALL => [ qw{
