@@ -29,4 +29,4 @@ foreach my $MODULE ( @MODULES ) {
     }
 }
 
-all_minimum_version_from_metayml_ok();
+all_minimum_version_ok('5.008001');
