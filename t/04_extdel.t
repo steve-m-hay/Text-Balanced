@@ -29,31 +29,31 @@ my $neg = 0;
 my $str;
 while (defined($str = <DATA>))
 {
-	chomp $str;
-	if ($str =~ s/\A# USING://) { $neg = 0; $cmd = $str; next; }
-	elsif ($str =~ /\A# TH[EI]SE? SHOULD FAIL/) { $neg = 1; next; }
-	elsif (!$str || $str =~ /\A#/) { $neg = 0; next }
-	$str =~ s/\\n/\n/g;
-	debug "\tUsing: $cmd\n";
-	debug "\t   on: [$str]\n";
+    chomp $str;
+    if ($str =~ s/\A# USING://) { $neg = 0; $cmd = $str; next; }
+    elsif ($str =~ /\A# TH[EI]SE? SHOULD FAIL/) { $neg = 1; next; }
+    elsif (!$str || $str =~ /\A#/) { $neg = 0; next }
+    $str =~ s/\\n/\n/g;
+    debug "\tUsing: $cmd\n";
+    debug "\t   on: [$str]\n";
 
-	my $var = eval "() = $cmd";
-	debug "\t list got: [$var]\n";
-	debug "\t list left: [$str]\n";
-	print "not " if (substr($str,pos($str)||0,1) eq ';')==$neg;
-	print "ok ", $count++;
-	print " ($@)" if $@ && $DEBUG;
-	print "\n";
+    my $var = eval "() = $cmd";
+    debug "\t list got: [$var]\n";
+    debug "\t list left: [$str]\n";
+    print "not " if (substr($str,pos($str)||0,1) eq ';')==$neg;
+    print "ok ", $count++;
+    print " ($@)" if $@ && $DEBUG;
+    print "\n";
 
-	pos $str = 0;
-	$var = eval $cmd;
-	$var = "<undef>" unless defined $var;
-	debug "\t scalar got: [$var]\n";
-	debug "\t scalar left: [$str]\n";
-	print "not " if ($str =~ '\A;')==$neg;
-	print "ok ", $count++;
-	print " ($@)" if $@ && $DEBUG;
-	print "\n";
+    pos $str = 0;
+    $var = eval $cmd;
+    $var = "<undef>" unless defined $var;
+    debug "\t scalar got: [$var]\n";
+    debug "\t scalar left: [$str]\n";
+    print "not " if ($str =~ '\A;')==$neg;
+    print "ok ", $count++;
+    print " ($@)" if $@ && $DEBUG;
+    print "\n";
 }
 
 __DATA__
