@@ -1,5 +1,7 @@
+Artistic                                 The "Artistic License"
 Changes                                  Change log
-LICENSE                                  The Licence
+Copying                                  The GNU General Public License
+LICENCE                                  The Licence
 Makefile.PL                              ExtUtils::MakeMaker script
 MANIFEST                                 This file
 README                                   A brief overview of the distribution

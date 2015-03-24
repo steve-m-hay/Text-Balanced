@@ -1061,6 +1061,8 @@ COPYRIGHT
 
     Some (minor) parts copyright 2009 Adam Kennedy.
 
-    This module is free software. It may be used, redistributed and/or
-    modified under the same terms as Perl itself.
-
+LICENCE
+    This distribution is free software; you can redistribute it and/or modify it
+    under the same terms as Perl itself, i.e. under the terms of either the GNU
+    General Public License or the Artistic License, as specified in the LICENCE
+    file.

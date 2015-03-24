@@ -1,3 +1,10 @@
+# Copyright 1997 - 2001 Damian Conway. All Rights Reserved.
+# Some (minor) parts copyright 2009 Adam Kennedy.
+
+# This module is free software; you can redistribute it and/or modify it under
+# the same terms as Perl itself, i.e. under the terms of either the GNU General
+# Public License or the Artistic License, as specified in the F<LICENCE> file.
+
 package Text::Balanced;
 
 # EXTRACT VARIOUSLY DELIMITED TEXT SEQUENCES FROM STRINGS.
@@ -2277,7 +2284,10 @@ Copyright 1997 - 2001 Damian Conway. All Rights Reserved.
 
 Some (minor) parts copyright 2009 Adam Kennedy.
 
-This module is free software. It may be used, redistributed
-and/or modified under the same terms as Perl itself.
+=head1 LICENCE
+
+This module is free software; you can redistribute it and/or modify it under the
+same terms as Perl itself, i.e. under the terms of either the GNU General Public
+License or the Artistic License, as specified in the F<LICENCE> file.
 
 =cut
