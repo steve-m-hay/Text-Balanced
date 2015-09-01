@@ -2,8 +2,9 @@ Artistic                                 The "Artistic License"
 Changes                                  Change log
 Copying                                  The GNU General Public License
 LICENCE                                  The Licence
-Makefile.PL                              ExtUtils::MakeMaker script
 MANIFEST                                 This file
+MANIFEST.SKIP                            Manifest skip specs
+Makefile.PL                              ExtUtils::MakeMaker script
 README                                   A brief overview of the distribution
 lib/Text/Balanced.pm                     Text::Balanced module
 t/01_compile.t                           Test script
