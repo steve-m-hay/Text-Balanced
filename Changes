@@ -10,7 +10,7 @@ Revision history for Perl distribution Text-Balanced.
       @INC reordering change in question (Perl core commit #b9ba2fadb1) first
       appeared in Perl 5.11.0.)
 
-    - Remove superfluous loading of SelfLoader.  [<nick@ccl4.org>, CPAN
+    - Removed superfluous loading of SelfLoader.  [<nick@ccl4.org>, CPAN
       RT#85572]
 
     - Minor documentation patch.  [<whatever@davidnicol.com>, CPAN RT#52623]
