@@ -1496,7 +1496,7 @@ an HTML link (which should not contain nested links) use:
 =item C<ignore =E<gt> $listref>
 
 The list reference contains one or more strings specifying patterns
-that are I<not> be be treated as nested tags within the tagged text
+that are I<not> to be treated as nested tags within the tagged text
 (even if they would match the start tag pattern).
 
 For example, to extract an arbitrary XML tag, but ignore "empty" elements:
@@ -1517,7 +1517,7 @@ C<extract_tagged> returns the complete text up to the point of failure.
 If the string is "PARA", C<extract_tagged> returns only the first paragraph
 after the tag (up to the first line that is either empty or contains
 only whitespace characters).
-If the string is "", the the default behaviour (i.e. failure) is reinstated.
+If the string is "", the default behaviour (i.e. failure) is reinstated.
 
 For example, suppose the start tag "/para" introduces a paragraph, which then
 continues until the next "/endpara" tag or until another "/para" tag is
@@ -1870,7 +1870,7 @@ Omitting the third argument (prefix argument) implies optional whitespace at the
 Omitting the fourth argument (outermost delimiter brackets) indicates that the
 value of the second argument is to be used for the outermost delimiters.
 
-Once the prefix an dthe outermost opening delimiter bracket have been
+Once the prefix and the outermost opening delimiter bracket have been
 recognized, code blocks are extracted by stepping through the input text and
 trying the following alternatives in sequence:
 
@@ -1956,7 +1956,7 @@ extracted substring removed from it. In all contexts
 C<extract_multiple> starts at the current C<pos> of the string, and
 sets that C<pos> appropriately after it matches.
 
-Hence, the aim of of a call to C<extract_multiple> in a list context
+Hence, the aim of a call to C<extract_multiple> in a list context
 is to split the processed string into as many non-overlapping fields as
 possible, by repeatedly applying each of the specified extractors
 to the remainder of the string. Thus C<extract_multiple> is
