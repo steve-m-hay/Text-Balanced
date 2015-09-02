@@ -142,7 +142,7 @@ MAIN: {
             'vars'       => '0'
         },
 
-        INSTALLDIRS => ($] >= 5.007003 ? 'perl' : 'site'),
+        INSTALLDIRS => ($] < 5.011 ? 'perl' : 'site'),
 
         dist => {
             PREOP   => 'find $(DISTVNAME) -type d -print|xargs chmod 0755 && ' .
