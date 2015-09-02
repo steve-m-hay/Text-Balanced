@@ -469,7 +469,7 @@ DESCRIPTION
     any specified prefix) removed.
 
   "gen_extract_tagged"
-    (Note: This subroutine is only available under Perl5.005)
+    (Note: This subroutine is only available under Perl5.005 or later.)
 
     "gen_extract_tagged" generates a new anonymous subroutine which extracts
     text between (balanced) specified tags. In other words, it generates a

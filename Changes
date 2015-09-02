@@ -2,6 +2,8 @@ Revision history for Perl distribution Text-Balanced.
 
 2.04 Development
 
+    - Minor documentation patch.  [<whatever@davidnicol.com>, CPAN RT#52623]
+
     - Typo fixes.  [<dsteinbrunner@pobox.com>, CPAN RT#85373]
 
     - Added optional Changes testing (skipped unless AUTHOR_TESTING).

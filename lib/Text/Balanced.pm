@@ -1586,7 +1586,7 @@ any specified prefix) removed.
 
 =head2 C<gen_extract_tagged>
 
-(Note: This subroutine is only available under Perl5.005)
+(Note: This subroutine is only available under Perl5.005 or later.)
 
 C<gen_extract_tagged> generates a new anonymous subroutine which
 extracts text between (balanced) specified tags. In other words,
