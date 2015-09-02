@@ -1,0 +1,26 @@
+PREREQUISITES
+
+    Perl
+
+        Perl version 5.8.1 or later.
+        The latest version of Perl is available from http://www.perl.com/.
+
+    Perl Modules
+
+        There are no non-standard Perl modules required by this module.
+
+INSTALLATION
+
+    To install this module, cd to the directory that contains this INSTALL file
+    and type the following:
+
+        perl Makefile.PL
+        make
+        make test
+        make install
+
+    On Windows, you will need to use "nmake" or "dmake" rather than "make" in
+    the commands above, depending on what your perl was built with.  To
+    determine which make program was used to build your perl type the following:
+
+        perl -V:make
