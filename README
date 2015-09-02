@@ -74,8 +74,7 @@ SYNOPSIS
     # Generate a reference to an anonymous sub that is just like
     extract_tagged # but pre-compiled and optimized for a specific pair of
     tags, and consequently # much faster (i.e. 3 times faster). It uses qr//
-    for better performance on # repeated calls, so it only works under Perl
-    5.005 or later.
+    for better performance on # repeated calls.
 
             $extract_head = gen_extract_tagged('<HEAD>','</HEAD>');
 
@@ -469,8 +468,6 @@ DESCRIPTION
     any specified prefix) removed.
 
   "gen_extract_tagged"
-    (Note: This subroutine is only available under Perl5.005 or later.)
-
     "gen_extract_tagged" generates a new anonymous subroutine which extracts
     text between (balanced) specified tags. In other words, it generates a
     function identical in function to "extract_tagged".
@@ -501,8 +498,7 @@ DESCRIPTION
                     return $extractor->($text);
             }
 
-    (although "extract_tagged" is not currently implemented that way, in
-    order to preserve pre-5.005 compatibility).
+    (although "extract_tagged" is not currently implemented that way).
 
     Using "gen_extract_tagged" to create extraction functions for specific
     tags is a good idea if those functions are going to be called more than

@@ -1112,7 +1112,7 @@ use Text::Balanced qw (
 # Generate a reference to an anonymous sub that is just like extract_tagged
 # but pre-compiled and optimized for a specific pair of tags, and consequently
 # much faster (i.e. 3 times faster). It uses qr// for better performance on
-# repeated calls, so it only works under Perl 5.005 or later.
+# repeated calls.
 
     $extract_head = gen_extract_tagged('<HEAD>','</HEAD>');
 
@@ -1585,8 +1585,6 @@ any specified prefix) removed.
 
 =head2 C<gen_extract_tagged>
 
-(Note: This subroutine is only available under Perl5.005 or later.)
-
 C<gen_extract_tagged> generates a new anonymous subroutine which
 extracts text between (balanced) specified tags. In other words,
 it generates a function identical in function to C<extract_tagged>.
@@ -1626,8 +1624,7 @@ equivalent to:
                 return $extractor->($text);
         }
 
-(although C<extract_tagged> is not currently implemented that way, in order
-to preserve pre-5.005 compatibility).
+(although C<extract_tagged> is not currently implemented that way).
 
 Using C<gen_extract_tagged> to create extraction functions for specific tags
 is a good idea if those functions are going to be called more than once, since
