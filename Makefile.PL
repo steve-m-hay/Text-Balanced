@@ -137,7 +137,6 @@ MAIN: {
         PREREQ_PM => {
             'Carp'       => '0',
             'Exporter'   => '0',
-            'SelfLoader' => '0',
             'overload'   => '0',
             'strict'     => '0',
             'vars'       => '0'

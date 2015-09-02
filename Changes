@@ -2,6 +2,9 @@ Revision history for Perl distribution Text-Balanced.
 
 2.04 Development
 
+    - Remove superfluous loading of SelfLoader.  [<nick@ccl4.org>, CPAN
+      RT#85572]
+
     - Minor documentation patch.  [<whatever@davidnicol.com>, CPAN RT#52623]
 
     - Typo fixes.  [<dsteinbrunner@pobox.com>, CPAN RT#85373]
