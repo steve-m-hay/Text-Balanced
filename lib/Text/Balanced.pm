@@ -794,6 +794,19 @@ sub _match_quotelike($$$$)      # ($textref, $prepat, $allow_raw_match)
     }
     pos($$textref) = $ld1pos;   # HAVE TO DO THIS BECAUSE LOOKAHEAD BROKEN
     my ($ldel1, $rdel1) = ("\Q$1","\Q$1");
+
+    if ($ldel1 eq '\=') {
+        if (substr($$textref, $str1pos, 1) eq '>') {
+            # special case for =>
+            {
+                _failmsg "Fat comma not quotelike",
+                pos $$textref;
+                pos $$textref = $startpos;
+                return;
+            }
+        }
+    }
+
     if ($ldel1 =~ /[[(<{]/)
     {
         $rdel1 =~ tr/[({</])}>/;
@@ -812,7 +825,9 @@ sub _match_quotelike($$$$)      # ($textref, $prepat, $allow_raw_match)
     my $second_arg = $op =~ /s|tr|y/ ? 1 : 0;
     if ($second_arg)
     {
+
         my ($ldel2, $rdel2);
+
         if ($ldel1 =~ /[[(<{]/)
         {
             unless ($$textref =~ /\G\s*(\S)/gc) # SHOULD USE LOOKAHEAD

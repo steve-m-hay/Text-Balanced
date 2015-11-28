@@ -11,14 +11,14 @@ use strict;
 # (It may become useful if the test is moved to ./t subdirectory.)
 
 my $loaded = 0;
-BEGIN { $| = 1; print "1..41\n"; }
+BEGIN { $| = 1; print "1..49\n"; }
 END {print "not ok 1\n" unless $loaded;}
 use Text::Balanced qw ( extract_codeblock );
 $loaded = 1;
 print "ok 1\n";
 my $count=2;
-use vars qw( $DEBUG );
-sub debug { print "\t>>>",@_ if $DEBUG }
+our $DEBUG = 1;
+sub debug { print join '', map "\t# $_\n", map { split /\n/ } @_ if $DEBUG }
 
 ######################### End of black magic.
 
@@ -53,7 +53,7 @@ while (defined($str = <DATA>))
     debug "\t scalar left: [$str]\n";
     print "not " if ($str =~ '\A;')==$neg;
     print "ok ", $count++;
-    print " ($@)" if $@ && $DEBUG;
+    debug " ($@)" if $@;
     print "\n";
 }
 
@@ -97,6 +97,14 @@ __DATA__
 { $a = $b; # what's this doing here? \n };'
 { $a = $b; \n $a =~ /$b/; \n @a = map /\s/ @b };
 
-# THIS SHOULD FAIL
+# THESE SHOULD FAIL
 { $a = $b; # what's this doing here? };'
 { $a = $b; # what's this doing here? ;'
+
+# USING: extract_codeblock($str,'{}');
+{ x1 => 1, z => 2};
+{ x2=> 1, y => 2};
+
+# THESE SHOULD FAIL
+{ x3 => 1, z => 2}, { x => 1, z => 3};
+{ x4 => 1, y => 2}, { x => 1, y => 3};
