@@ -89,7 +89,7 @@ MAIN: {
                         test => {
                             requires => {
                                 'Perl::MinimumVersion' => '1.20',
-                                'Test::MinimumVersion' => '0.008'
+                                'Test::MinimumVersion' => '0.101082'
                             }
                         }
                     }

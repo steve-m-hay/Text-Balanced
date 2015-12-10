@@ -11,7 +11,7 @@ use Test::More;
 
 my @MODULES = (
     'Perl::MinimumVersion 1.20',
-    'Test::MinimumVersion 0.008',
+    'Test::MinimumVersion 0.101082',
 );
 
 # Don't run tests for installs
@@ -29,4 +29,4 @@ foreach my $MODULE ( @MODULES ) {
     }
 }
 
-all_minimum_version_ok('5.008001');
+all_minimum_version_from_mymetayml_ok();
