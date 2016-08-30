@@ -1045,6 +1045,9 @@ DIAGNOSTICS
 AUTHOR
     Damian Conway (damian@conway.org)
 
+    Steve Hay E<lt>shay@cpan.orgE<gt> is now maintaining Text::Balanced as of
+    version 2.03
+
 BUGS AND IRRITATIONS
     There are undoubtedly serious bugs lurking somewhere in this code, if
     only because parts of it give the impression of understanding a great
@@ -1056,6 +1059,9 @@ COPYRIGHT
     Copyright 1997 - 2001 Damian Conway. All Rights Reserved.
 
     Some (minor) parts copyright 2009 Adam Kennedy.
+
+    Changes in Version 2.03 onwards Copyright (C) 2015 Steve Hay.  All rights
+    reserved.
 
 LICENCE
     This distribution is free software; you can redistribute it and/or modify it

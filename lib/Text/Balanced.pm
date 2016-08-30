@@ -1,5 +1,7 @@
 # Copyright 1997 - 2001 Damian Conway. All Rights Reserved.
 # Some (minor) parts copyright 2009 Adam Kennedy.
+# Changes in Version 2.03 onwards Copyright (C) 2015 Steve Hay.  All rights
+# reserved.
 
 # This module is free software; you can redistribute it and/or modify it under
 # the same terms as Perl itself, i.e. under the terms of either the GNU General
@@ -2266,6 +2268,9 @@ to match the original opening tag (and the failure mode was not
 
 Damian Conway (damian@conway.org)
 
+Steve Hay E<lt>shay@cpan.orgE<gt> is now maintaining Text::Balanced as of
+version 2.03
+
 =head1 BUGS AND IRRITATIONS
 
 There are undoubtedly serious bugs lurking somewhere in this code, if
@@ -2279,6 +2284,9 @@ Bug reports and other feedback are most welcome.
 Copyright 1997 - 2001 Damian Conway. All Rights Reserved.
 
 Some (minor) parts copyright 2009 Adam Kennedy.
+
+Changes in Version 2.03 onwards Copyright (C) 2015 Steve Hay.  All rights
+reserved.
 
 =head1 LICENCE
 
