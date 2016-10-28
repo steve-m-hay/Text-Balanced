@@ -1042,26 +1042,13 @@ DIAGNOSTICS
         closing tag to match the original opening tag (and the failure mode
         was not "MAX" or "PARA").
 
-AUTHOR
-    Damian Conway (damian@conway.org)
-
-    Steve Hay E<lt>shay@cpan.orgE<gt> is now maintaining Text::Balanced as of
-    version 2.03
-
-BUGS AND IRRITATIONS
-    There are undoubtedly serious bugs lurking somewhere in this code, if
-    only because parts of it give the impression of understanding a great
-    deal more about Perl than they really do.
-
-    Bug reports and other feedback are most welcome.
+INSTALLATION
+    See the INSTALL file.
 
 COPYRIGHT
-    Copyright 1997 - 2001 Damian Conway. All Rights Reserved.
-
-    Some (minor) parts copyright 2009 Adam Kennedy.
-
-    Changes in Version 2.03 onwards Copyright (C) 2015 Steve Hay.  All rights
-    reserved.
+    Copyright (C) 1997-2001 Damian Conway. All rights reserved.
+    Copyright (C) 2009 Adam Kennedy.
+    Copyright (C) 2015 Steve Hay. All rights reserved.
 
 LICENCE
     This distribution is free software; you can redistribute it and/or modify it
