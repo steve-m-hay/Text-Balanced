@@ -1,13 +1,13 @@
 Artistic                                 The "Artistic License"
-Changes                                  Change log
+Changes                                  Differences from previous version
 Copying                                  The GNU General Public License
 INSTALL                                  Detailed installation instructions
+lib/Text/Balanced.pm                     Text::Balanced Perl module
 LICENCE                                  The Licence
-MANIFEST                                 This file
+Makefile.PL                              Makefile writer
+MANIFEST                                 This list of files
 MANIFEST.SKIP                            Manifest skip specs
-Makefile.PL                              ExtUtils::MakeMaker script
-README                                   A brief overview of the distribution
-lib/Text/Balanced.pm                     Text::Balanced module
+README                                   The Instructions
 t/01_compile.t                           Test script
 t/02_extbrk.t                            Test script
 t/03_extcbk.t                            Test script
@@ -17,8 +17,8 @@ t/06_extqlk.t                            Test script
 t/07_exttag.t                            Test script
 t/08_extvar.t                            Test script
 t/09_gentag.t                            Test script
-t/94_changes.t                           Test script
-t/95_critic.t                            Test script
+t/94_changes.t                           See if Changes file format is OK
+t/95_critic.t                            See if coding style is OK
 t/96_pmv.t                               Test script
-t/97_pod.t                               Test script
-t/98_pod_coverage.t                      Test script
+t/97_pod.t                               See if POD is OK
+t/98_pod_coverage.t                      See if POD coverage is OK
