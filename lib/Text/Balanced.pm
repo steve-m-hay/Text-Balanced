@@ -2265,10 +2265,10 @@ to match the original opening tag (and the failure mode was not
 
 =head1 AUTHOR
 
-Damian Conway E<lt>F<damian@conway.org>E<gt>.
+Damian Conway E<lt>L<damian@conway.org|mailto:damian@conway.org>E<gt>.
 
-Steve Hay E<lt>F<shay@cpan.org>E<gt> is now maintaining Text::Balanced as of
-version 2.03.
+Steve Hay E<lt>L<shay@cpan.org|mailto:shay@cpan.org>E<gt> is now maintaining
+Text::Balanced as of version 2.03.
 
 =head1 BUGS AND IRRITATIONS
 
