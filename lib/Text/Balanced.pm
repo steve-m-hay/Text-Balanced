@@ -1041,60 +1041,54 @@ Text::Balanced - Extract delimited text sequences from strings.
 
 =head1 SYNOPSIS
 
-use Text::Balanced qw (
-    extract_delimited
-    extract_bracketed
-    extract_quotelike
-    extract_codeblock
-    extract_variable
-    extract_tagged
-    extract_multiple
-    gen_delimited_pat
-    gen_extract_tagged
-);
+    use Text::Balanced qw (
+        extract_delimited
+        extract_bracketed
+        extract_quotelike
+        extract_codeblock
+        extract_variable
+        extract_tagged
+        extract_multiple
+        gen_delimited_pat
+        gen_extract_tagged
+    );
 
- # Extract the initial substring of $text that is delimited by
- # two (unescaped) instances of the first character in $delim.
+    # Extract the initial substring of $text that is delimited by
+    # two (unescaped) instances of the first character in $delim.
 
     ($extracted, $remainder) = extract_delimited($text,$delim);
 
-
- # Extract the initial substring of $text that is bracketed
- # with a delimiter(s) specified by $delim (where the string
- # in $delim contains one or more of '(){}[]<>').
+    # Extract the initial substring of $text that is bracketed
+    # with a delimiter(s) specified by $delim (where the string
+    # in $delim contains one or more of '(){}[]<>').
 
     ($extracted, $remainder) = extract_bracketed($text,$delim);
 
-
- # Extract the initial substring of $text that is bounded by
- # an XML tag.
+    # Extract the initial substring of $text that is bounded by
+    # an XML tag.
 
     ($extracted, $remainder) = extract_tagged($text);
 
-
- # Extract the initial substring of $text that is bounded by
- # a C<BEGIN>...C<END> pair. Don't allow nested C<BEGIN> tags
+    # Extract the initial substring of $text that is bounded by
+    # a C<BEGIN>...C<END> pair. Don't allow nested C<BEGIN> tags
 
     ($extracted, $remainder) =
         extract_tagged($text,"BEGIN","END",undef,{bad=>["BEGIN"]});
 
-
- # Extract the initial substring of $text that represents a
- # Perl "quote or quote-like operation"
+    # Extract the initial substring of $text that represents a
+    # Perl "quote or quote-like operation"
 
     ($extracted, $remainder) = extract_quotelike($text);
 
-
- # Extract the initial substring of $text that represents a block
- # of Perl code, bracketed by any of character(s) specified by $delim
- # (where the string $delim contains one or more of '(){}[]<>').
+    # Extract the initial substring of $text that represents a block
+    # of Perl code, bracketed by any of character(s) specified by $delim
+    # (where the string $delim contains one or more of '(){}[]<>').
 
     ($extracted, $remainder) = extract_codeblock($text,$delim);
 
-
- # Extract the initial substrings of $text that would be extracted by
- # one or more sequential applications of the specified functions
- # or regular expressions
+    # Extract the initial substrings of $text that would be extracted by
+    # one or more sequential applications of the specified functions
+    # or regular expressions
 
     @extracted = extract_multiple($text,
                                   [ \&extract_bracketed,
@@ -1104,19 +1098,18 @@ use Text::Balanced qw (
                                     'literal',
                                   ]);
 
-# Create a string representing an optimized pattern (a la Friedl)
-# that matches a substring delimited by any of the specified characters
-# (in this case: any type of quote or a slash)
+    # Create a string representing an optimized pattern (a la Friedl)
+    # that matches a substring delimited by any of the specified characters
+    # (in this case: any type of quote or a slash)
 
     $patstring = gen_delimited_pat(q{'"`/});
 
-# Generate a reference to an anonymous sub that is just like extract_tagged
-# but pre-compiled and optimized for a specific pair of tags, and consequently
-# much faster (i.e. 3 times faster). It uses qr// for better performance on
-# repeated calls.
+    # Generate a reference to an anonymous sub that is just like extract_tagged
+    # but pre-compiled and optimized for a specific pair of tags, and
+    # consequently much faster (i.e. 3 times faster). It uses qr// for better
+    # performance on repeated calls.
 
     $extract_head = gen_extract_tagged('<HEAD>','</HEAD>');
-
     ($extracted, $remainder) = $extract_head->($text);
 
 =head1 DESCRIPTION
@@ -1137,7 +1130,7 @@ they extract an occurrence of the substring appearing
 immediately at the current matching position in the
 string (like a C<\G>-anchored regex would).
 
-=head2 General behaviour in list contexts
+=head2 General Behaviour in List Contexts
 
 In a list context, all the subroutines return a list, the first three
 elements of which are always:
@@ -1174,7 +1167,7 @@ subroutines can be used much like regular expressions. For example:
         # process next quote-like (in $next)
     }
 
-=head2 General behaviour in scalar and void contexts
+=head2 General Behaviour in Scalar and Void Contexts
 
 In a scalar context, the extracted string is returned, having first been
 removed from the input text. Thus, the following code also processes
@@ -1192,7 +1185,7 @@ In a void context the behaviour of the extraction subroutines is
 exactly the same as in a scalar context, except (of course) that the
 extracted substring is not returned.
 
-=head2 A note about prefixes
+=head2 A Note About Prefixes
 
 Prefix patterns are matched without any trailing modifiers (C</gimsox> etc.)
 This can bite you if you're expecting a prefix specification like
@@ -1203,7 +1196,11 @@ pattern will only succeed if the <H1> tag is on the current line, since
 To overcome this limitation, you need to turn on /s matching within
 the prefix pattern, using the C<(?s)> directive: '(?s).*?(?=<H1>)'
 
-=head2 C<extract_delimited>
+=head2 Functions
+
+=over 4
+
+=item C<extract_delimited>
 
 The C<extract_delimited> function formalizes the common idiom
 of extracting a single-character-delimited substring from the start of
@@ -1284,7 +1281,7 @@ not:
 
 See L<"extract_quotelike"> for a (partial) solution to this problem.
 
-=head2 C<extract_bracketed>
+=item C<extract_bracketed>
 
 Like C<"extract_delimited">, the C<extract_bracketed> function takes
 up to three optional scalar arguments: a string to extract from, a delimiter
@@ -1387,7 +1384,7 @@ would correctly match something like this:
 
 See also: C<"extract_quotelike"> and C<"extract_codeblock">.
 
-=head2 C<extract_variable>
+=item C<extract_variable>
 
 C<extract_variable> extracts any valid Perl variable or
 variable-involved expression, including scalars, arrays, hashes, array
@@ -1438,8 +1435,7 @@ failure. In addition, the original input text has the returned substring
 In a void context, the input text just has the matched substring (and
 any specified prefix) removed.
 
-
-=head2 C<extract_tagged>
+=item C<extract_tagged>
 
 C<extract_tagged> extracts and segments text between (balanced)
 specified tags.
@@ -1584,7 +1580,7 @@ text has the returned substring (and any prefix) removed from it.
 In a void context, the input text just has the matched substring (and
 any specified prefix) removed.
 
-=head2 C<gen_extract_tagged>
+=item C<gen_extract_tagged>
 
 C<gen_extract_tagged> generates a new anonymous subroutine which
 extracts text between (balanced) specified tags. In other words,
@@ -1632,8 +1628,7 @@ is a good idea if those functions are going to be called more than once, since
 their performance is typically twice as good as the more general-purpose
 C<extract_tagged>.
 
-
-=head2 C<extract_quotelike>
+=item C<extract_quotelike>
 
 C<extract_quotelike> attempts to recognize, extract, and segment any
 one of the various Perl quotes and quotelike operators (see
@@ -1763,7 +1758,7 @@ Examples:
                         print "$op is not a pattern matching operation\n";
                 }
 
-=head2 C<extract_quotelike> and "here documents"
+=item C<extract_quotelike>
 
 C<extract_quotelike> can successfully extract "here documents" from an input
 string, but with an important caveat in list contexts.
@@ -1848,7 +1843,7 @@ you can pass the input variable as an interpolated literal:
 
         $quotelike = extract_quotelike("$var");
 
-=head2 C<extract_codeblock>
+=item C<extract_codeblock>
 
 C<extract_codeblock> attempts to recognize and extract a balanced
 bracket delimited substring that may contain unbalanced brackets
@@ -1939,7 +1934,7 @@ S<C<extract_codeblock($text, '{}', undef, 'E<lt>E<gt>')>>
 the '>' character is only treated as a delimited at the outermost
 level of the code block, so the directive is parsed correctly.
 
-=head2 C<extract_multiple>
+=item C<extract_multiple>
 
 The C<extract_multiple> subroutine takes a string to be processed and a
 list of extractors (subroutines or regular expressions) to apply to that string.
@@ -2086,7 +2081,7 @@ If you wanted the commas preserved as separate fields (i.e. like split
 does if your split pattern has capturing parentheses), you would
 just make the last parameter undefined (or remove it).
 
-=head2 C<gen_delimited_pat>
+=item C<gen_delimited_pat>
 
 The C<gen_delimited_pat> subroutine takes a single (string) argument and
    > builds a Friedl-style optimized regex that matches a string delimited
@@ -2125,11 +2120,12 @@ If more delimiters than escape chars are specified, the last escape char
 is used for the remaining delimiters.
 If no escape char is specified for a given specified delimiter, '\' is used.
 
-=head2 C<delimited_pat>
+=item C<delimited_pat>
 
 Note that C<gen_delimited_pat> was previously called C<delimited_pat>.
 That name may still be used, but is now deprecated.
 
+=back
 
 =head1 DIAGNOSTICS
 
@@ -2263,20 +2259,98 @@ to match the original opening tag (and the failure mode was not
 
 =back
 
+=head1 EXPORTS
+
+The following symbols are, or can be, exported by this module:
+
+=over 4
+
+=item Default Exports
+
+I<None>.
+
+=item Optional Exports
+
+C<extract_delimited>,
+C<extract_bracketed>,
+C<extract_quotelike>,
+C<extract_codeblock>,
+C<extract_variable>,
+C<extract_tagged>,
+C<extract_multiple>,
+C<gen_delimited_pat>,
+C<gen_extract_tagged>,
+C<delimited_pat>.
+
+=item Export Tags
+
+=over 4
+
+=item C<:ALL>
+
+C<extract_delimited>,
+C<extract_bracketed>,
+C<extract_quotelike>,
+C<extract_codeblock>,
+C<extract_variable>,
+C<extract_tagged>,
+C<extract_multiple>,
+C<gen_delimited_pat>,
+C<gen_extract_tagged>,
+C<delimited_pat>.
+
+=back
+
+=back
+
+=head1 FEEDBACK
+
+Patches, bug reports, suggestions or any other feedback is welcome.
+
+Patches can be sent as GitHub pull requests at
+L<https://github.com/steve-m-hay/Text-Balanced/pulls>.
+
+Bug reports and suggestions can be made on the CPAN Request Tracker at
+L<https://rt.cpan.org/Public/Bug/Report.html?Queue=Text-Balanced>.
+
+Currently active requests on the CPAN Request Tracker can be viewed at
+L<https://rt.cpan.org/Public/Dist/Display.html?Status=Active;Queue=Text-Balanced>.
+
+Please test this distribution.  See CPAN Testers Reports at
+L<http://www.cpantesters.org/> for details of how to get involved.
+
+Previous test results on CPAN Testers Reports can be viewed at
+L<http://www.cpantesters.org/distro/T/Text-Balanced.html>.
+
+Please rate this distribution on CPAN Ratings at
+L<http://cpanratings.perl.org/rate/?distribution=Text-Balanced>.
+
+=head1 AVAILABILITY
+
+The latest version of this module is available from CPAN (see
+L<perlmodlib/"CPAN"> for details) at
+
+L<https://metacpan.org/release/Text-Balanced> or
+
+L<http://search.cpan.org/dist/Text-Balanced/> or
+
+L<http://www.cpan.org/authors/id/S/SH/SHAY/> or
+
+L<http://www.cpan.org/modules/by-module/Text/>.
+
+The latest source code is available from GitHub at
+L<https://github.com/steve-m-hay/Text-Balanced>.
+
+=head1 INSTALLATION
+
+See the F<INSTALL> file.
+
 =head1 AUTHOR
 
 Damian Conway E<lt>L<damian@conway.org|mailto:damian@conway.org>E<gt>.
 
 Steve Hay E<lt>L<shay@cpan.org|mailto:shay@cpan.org>E<gt> is now maintaining
 Text::Balanced as of version 2.03.
-
-=head1 BUGS AND IRRITATIONS
-
-There are undoubtedly serious bugs lurking somewhere in this code, if
-only because parts of it give the impression of understanding a great deal
-more about Perl than they really do.
-
-Bug reports and other feedback are most welcome.
 
 =head1 COPYRIGHT
 
@@ -2291,5 +2365,17 @@ Copyright (C) 2015 Steve Hay.  All rights reserved.
 This module is free software; you can redistribute it and/or modify it under the
 same terms as Perl itself, i.e. under the terms of either the GNU General Public
 License or the Artistic License, as specified in the F<LICENCE> file.
+
+=head1 VERSION
+
+Version 2.04
+
+=head1 DATE
+
+TODO
+
+=head1 HISTORY
+
+See the F<Changes> file.
 
 =cut
