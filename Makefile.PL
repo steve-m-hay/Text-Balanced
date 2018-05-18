@@ -44,8 +44,9 @@ MAIN: {
 
             resources => {
                 repository => {
+                    web  => 'https://github.com/steve-m-hay/Text-Balanced.git',
                     type => 'git',
-                    url  => 'https://github.com/steve-m-hay/Text-Balanced.git'
+                    url  => 'git://github.com/steve-m-hay/Text-Balanced.git',
                 }
             },
 
