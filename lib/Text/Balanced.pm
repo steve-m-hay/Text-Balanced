@@ -2332,8 +2332,6 @@ L<perlmodlib/"CPAN"> for details) at
 
 L<https://metacpan.org/release/Text-Balanced> or
 
-L<http://search.cpan.org/dist/Text-Balanced/> or
-
 L<http://www.cpan.org/authors/id/S/SH/SHAY/> or
 
 L<http://www.cpan.org/modules/by-module/Text/>.
