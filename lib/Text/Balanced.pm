@@ -2303,6 +2303,10 @@ C<delimited_pat>.
 
 =back
 
+=head1 KNOWN BUGS
+
+See L<https://rt.cpan.org/Dist/Display.html?Status=Active&Queue=Text-Balanced>.
+
 =head1 FEEDBACK
 
 Patches, bug reports, suggestions or any other feedback is welcome.
