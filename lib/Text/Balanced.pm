@@ -2321,13 +2321,13 @@ Currently active requests on the CPAN Request Tracker can be viewed at
 L<https://rt.cpan.org/Public/Dist/Display.html?Status=Active;Queue=Text-Balanced>.
 
 Please test this distribution.  See CPAN Testers Reports at
-L<http://www.cpantesters.org/> for details of how to get involved.
+L<https://www.cpantesters.org/> for details of how to get involved.
 
 Previous test results on CPAN Testers Reports can be viewed at
-L<http://www.cpantesters.org/distro/T/Text-Balanced.html>.
+L<https://www.cpantesters.org/distro/T/Text-Balanced.html>.
 
 Please rate this distribution on CPAN Ratings at
-L<http://cpanratings.perl.org/rate/?distribution=Text-Balanced>.
+L<https://cpanratings.perl.org/rate/?distribution=Text-Balanced>.
 
 =head1 AVAILABILITY
 
@@ -2336,9 +2336,9 @@ L<perlmodlib/"CPAN"> for details) at
 
 L<https://metacpan.org/release/Text-Balanced> or
 
-L<http://www.cpan.org/authors/id/S/SH/SHAY/> or
+L<https://www.cpan.org/authors/id/S/SH/SHAY/> or
 
-L<http://www.cpan.org/modules/by-module/Text/>.
+L<https://www.cpan.org/modules/by-module/Text/>.
 
 The latest source code is available from GitHub at
 L<https://github.com/steve-m-hay/Text-Balanced>.
