@@ -4,6 +4,7 @@
 use 5.008001;
 
 use strict;
+use warnings;
 
 ######################### We start with some black magic to print on failure.
 
@@ -34,7 +35,12 @@ while (defined($str = <DATA>))
     if ($str =~ s/\A# USING://)
     {
         $neg = 0;
-        eval{local$^W;*f = eval $str || die};
+        eval {
+                # Capture "Subroutine main::f redefined" warning
+                my @warnings;
+                local $SIG{__WARN__} = sub { push @warnings, shift; };
+                *f = eval $str || die;
+        };
         next;
     }
     elsif ($str =~ /\A# TH[EI]SE? SHOULD FAIL/) { $neg = 1; next; }

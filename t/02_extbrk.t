@@ -4,6 +4,7 @@
 use 5.008001;
 
 use strict;
+use warnings;
 
 ######################### We start with some black magic to print on failure.
 
