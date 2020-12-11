@@ -1,5 +1,9 @@
 Revision history for Perl distribution Text-Balanced.
 
+2.05 Development
+
+    - TODO
+
 2.04 2020-12-11
 
     - Fixed INSTALLDIRS to account for the @INC reordering change in Perl 5.12.
