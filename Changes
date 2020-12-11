@@ -1,6 +1,6 @@
 Revision history for Perl distribution Text-Balanced.
 
-2.04 Development
+2.04 2020-12-11
 
     - Fixed INSTALLDIRS to account for the @INC reordering change in Perl 5.12.
       See Perl RT#116479 for details.  (Text-Balanced entered the perl core in

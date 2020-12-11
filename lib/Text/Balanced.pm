@@ -2360,7 +2360,7 @@ Copyright (C) 1997-2001 Damian Conway.  All rights reserved.
 
 Copyright (C) 2009 Adam Kennedy.
 
-Copyright (C) 2015 Steve Hay.  All rights reserved.
+Copyright (C) 2015, 2020 Steve Hay.  All rights reserved.
 
 =head1 LICENCE
 
@@ -2374,7 +2374,7 @@ Version 2.04
 
 =head1 DATE
 
-TODO
+11 Dec 2020
 
 =head1 HISTORY
 
