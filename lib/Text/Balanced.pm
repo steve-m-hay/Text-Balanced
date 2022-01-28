@@ -874,6 +874,7 @@ my $def_func = [
     sub { extract_quotelike($_[0],'') },
     sub { extract_codeblock($_[0],'{}','') },
 ];
+my %ref_not_regex = map +($_=>1), qw(CODE Text::Balanced::Extractor);
 
 sub extract_multiple (;$$$$)    # ($text, $functions_ref, $max_fields, $ignoreunknown)
 {
@@ -913,6 +914,7 @@ sub extract_multiple (;$$$$)    # ($text, $functions_ref, $max_fields, $ignoreun
             {
                 push @class, undef;
             }
+            $func = qr/\G$func/ if !$ref_not_regex{ref $func};
         }
 
         FIELD: while (pos($$textref) < length($$textref))
@@ -929,7 +931,7 @@ sub extract_multiple (;$$$$)    # ($text, $functions_ref, $max_fields, $ignoreun
                     { ($field,$rem,$pref) = @bits = $func->($$textref) }
                 elsif (ref($func) eq 'Text::Balanced::Extractor')
                     { @bits = $field = $func->extract($$textref) }
-                elsif( $$textref =~ m/\G$func/gc )
+                elsif( $$textref =~ m/$func[$i]/gc )
                     { @bits = $field = defined($1)
                         ? $1
                         : substr($$textref, $-[0], $+[0] - $-[0])
