@@ -786,9 +786,16 @@ sub _match_quotelike($$$$)      # ($textref, $prepat, $allow_raw_match)
     $ld1pos = pos($$textref);
     $str1pos = $ld1pos+1;
 
-    unless ($$textref =~ m/\G(\S)/gc)   # SHOULD USE LOOKAHEAD
+    if ($$textref !~ m/\G(\S)/gc)   # SHOULD USE LOOKAHEAD
     {
         _failmsg "No block delimiter found after quotelike $op",
+                 pos $$textref;
+        pos $$textref = $startpos;
+        return;
+    }
+    elsif (substr($$textref, $ld1pos, 2) eq '=>')
+    {
+        _failmsg "quotelike $op was actually quoted by '=>'",
                  pos $$textref;
         pos $$textref = $startpos;
         return;

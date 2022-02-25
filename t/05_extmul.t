@@ -12,7 +12,7 @@ use warnings;
 # (It may become useful if the test is moved to ./t subdirectory.)
 
 my $loaded = 0;
-BEGIN { $| = 1; print "1..87\n"; }
+BEGIN { $| = 1; print "1..88\n"; }
 END {print "not ok 1\n" unless $loaded;}
 use Text::Balanced qw ( :ALL );
 $loaded = 1;
@@ -329,3 +329,17 @@ expect [ extract_multiple($not_here_doc, [
   { DONT_MATCH => \&extract_quotelike }
 ]) ],
        [ "sub f {\n my \$pa <<= 2;\n}\n\n" ];
+
+# TEST 88
+my $y_falsematch = <<'EOF'; # wrong in 2.04
+my $p = {y => 1};
+{ $pa=ones(3,3,3); my $f = do { my $i=1; my $v=$$p{y}-$i; $pb = $pa(,$i,) }; }
+EOF
+expect [ extract_multiple($y_falsematch, [
+  \&extract_variable,
+  { DONT_MATCH => \&extract_quotelike }
+]) ],
+  [ 'my ', '$p', " = {y => 1};\n{ ", '$pa', '=ones(3,3,3); my ', '$f',
+    ' = do { my ', '$i', '=1; my ', '$v', qw(= $$p{y} - $i), '; ', '$pb',
+    ' = ', qw{$pa (, $i}, ",) }; }\n",
+  ];
