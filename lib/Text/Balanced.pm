@@ -433,7 +433,7 @@ sub extract_variable (;$$)
 {
     my $textref = defined $_[0] ? \$_[0] : \$_;
     return ("","","") unless defined $$textref;
-    my $pre  = defined $_[1] ? $_[1] : '\s*';
+    my $pre  = defined $_[1] ? qr/\G($_[1])/ : qr/\G(\s*)/;
 
     my @match = _match_variable($textref,$pre);
 
@@ -450,7 +450,7 @@ sub _match_variable($$)
 #  $$
     my ($textref, $pre) = @_;
     my $startpos = pos($$textref) = pos($$textref)||0;
-    unless ($$textref =~ m/\G($pre)/gc)
+    unless ($$textref =~ m/$pre/gc)
     {
         _failmsg "Did not find prefix: /$pre/", pos $$textref;
         return;
@@ -467,7 +467,7 @@ sub _match_variable($$)
         my $deref = $1;
 
         unless ($$textref =~ m/\G\s*(?:::|')?(?:[_a-z]\w*(?:::|'))*[_a-z]\w*/gci
-            or _match_codeblock($textref, "", '\{', '\}', '\{', '\}', 0)
+            or _match_codeblock($textref, qr/\G()/, '\{', '\}', '\{', '\}', 0)
             or $deref eq '$#' or $deref eq '$$' )
         {
             _failmsg "Bad identifier after dereferencer", pos $$textref;
@@ -480,13 +480,13 @@ sub _match_variable($$)
     {
         next if $$textref =~ m/\G\s*(?:->)?\s*[{]\w+[}]/gc;
         next if _match_codeblock($textref,
-                                 qr/\s*->\s*(?:[_a-zA-Z]\w+\s*)?/,
+                                 qr/\G(\s*->\s*(?:[_a-zA-Z]\w+\s*)?)/,
                                  qr/[({[]/, qr/[)}\]]/,
                                  qr/[({[]/, qr/[)}\]]/, 0);
         next if _match_codeblock($textref,
-                                 qr/\s*/, qr/[{[]/, qr/[}\]]/,
+                                 qr/\G(\s*)/, qr/[{[]/, qr/[}\]]/,
                                  qr/[{[]/, qr/[}\]]/, 0);
-        next if _match_variable($textref,'\s*->\s*');
+        next if _match_variable($textref,qr/\G(\s*->\s*)/);
         next if $$textref =~ m/\G\s*->\s*\w+(?![{([])/gc;
         last;
     }
@@ -503,7 +503,7 @@ sub extract_codeblock (;$$$$$)
     my $textref = defined $_[0] ? \$_[0] : \$_;
     my $wantarray = wantarray;
     my $ldel_inner = defined $_[1] ? $_[1] : '{';
-    my $pre        = defined $_[2] ? $_[2] : '\s*';
+    my $pre = !defined $_[2] ? qr/\G(\s*)/ : qr/\G($_[2])/;
     my $ldel_outer = defined $_[3] ? $_[3] : $ldel_inner;
     my $rd         = $_[4];
     my $rdel_inner = $ldel_inner;
@@ -532,7 +532,7 @@ sub _match_codeblock($$$$$$$)
 {
     my ($textref, $pre, $ldel_outer, $rdel_outer, $ldel_inner, $rdel_inner, $rd) = @_;
     my $startpos = pos($$textref) = pos($$textref) || 0;
-    unless ($$textref =~ m/\G($pre)/gc)
+    unless ($$textref =~ m/$pre/gc)
     {
         _failmsg qq{Did not match prefix /$pre/ at"} .
                      substr($$textref,pos($$textref),20) .
@@ -581,7 +581,7 @@ sub _match_codeblock($$$$$$$)
             last;
         }
 
-        if (_match_variable($textref,'\s*') ||
+        if (_match_variable($textref,qr/\G(\s*)/) ||
             _match_quotelike($textref,'\s*',$patvalid,$patvalid) )
         {
             $patvalid = 0;
@@ -603,7 +603,7 @@ sub _match_codeblock($$$$$$$)
             next;
         }
 
-        if ( _match_codeblock($textref, '\s*', $ldel_inner, $rdel_inner, $ldel_inner, $rdel_inner, $rd) )
+        if ( _match_codeblock($textref, qr/\G(\s*)/, $ldel_inner, $rdel_inner, $ldel_inner, $rdel_inner, $rd) )
         {
             $patvalid = 1;
             next;
