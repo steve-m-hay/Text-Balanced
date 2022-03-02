@@ -341,5 +341,5 @@ expect [ extract_multiple($y_falsematch, [
 ]) ],
   [ 'my ', '$p', " = {y => 1};\n{ ", '$pa', '=ones(3,3,3); my ', '$f',
     ' = do { my ', '$i', '=1; my ', '$v', qw(= $$p{y} - $i), '; ', '$pb',
-    ' = ', qw{$pa (, $i}, ",) }; }\n",
+    ' = ', '$pa', '(,', '$i', ",) }; }\n",
   ];
