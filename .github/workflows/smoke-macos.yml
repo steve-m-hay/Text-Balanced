@@ -1,0 +1,28 @@
+name: smoke-macos
+
+on:
+  push:
+    branches:
+      - '*'
+    tags-ignore:
+      - '*'
+  pull_request:
+
+jobs:
+  perl:
+
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@master
+        with:
+            fetch-depth: 10
+      - name: Configure
+        run: |
+            perl Makefile.PL
+      - name: Build
+        run: |
+            make
+      - name: Run Tests
+        run: |
+            make test

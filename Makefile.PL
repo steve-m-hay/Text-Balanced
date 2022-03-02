@@ -22,7 +22,7 @@ use 5.008001;
 use strict;
 use warnings;
 
-use ExtUtils::MakeMaker 6.64;
+use ExtUtils::MakeMaker;
 use ExtUtils::MakeMaker qw(WriteMakefile);
 
 #===============================================================================
