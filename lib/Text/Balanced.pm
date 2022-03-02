@@ -153,7 +153,7 @@ sub extract_bracketed (;$$$)
 {
     my $textref = defined $_[0] ? \$_[0] : \$_;
     my $ldel = defined $_[1] ? $_[1] : '{([<';
-    my $pre  = defined $_[2] ? $_[2] : '\s*';
+    my $pre  = defined $_[2] ? qr/\G$_[2]/ : qr/\G\s*/;
     my $wantarray = wantarray;
     my $qdel = "";
     my $quotelike;
@@ -175,7 +175,7 @@ sub extract_bracketed (;$$$)
     pos = $posbug;
 
     my $startpos = pos $$textref || 0;
-    my @match = _match_bracketed($textref,$pre, $ldel, $qdel, $quotelike, $rdel);
+    my @match = _match_bracketed($textref,$pre, qr/\G($ldel)/, $qdel && qr/\G([$qdel])/, $quotelike, qr/\G($rdel)/);
 
     return _fail ($wantarray, $textref) unless @match;
 
@@ -190,7 +190,7 @@ sub _match_bracketed($$$$$$)    # $textref, $pre, $ldel, $qdel, $quotelike, $rde
 {
     my ($textref, $pre, $ldel, $qdel, $quotelike, $rdel) = @_;
     my ($startpos, $ldelpos, $endpos) = (pos $$textref = pos $$textref||0);
-    unless ($$textref =~ m/\G$pre/gc)
+    unless ($$textref =~ m/$pre/gc)
     {
         _failmsg "Did not find prefix: /$pre/", $startpos;
         return;
@@ -198,7 +198,7 @@ sub _match_bracketed($$$$$$)    # $textref, $pre, $ldel, $qdel, $quotelike, $rde
 
     $ldelpos = pos $$textref;
 
-    unless ($$textref =~ m/\G($ldel)/gc)
+    unless ($$textref =~ m/$ldel/gc)
     {
         _failmsg "Did not find opening bracket after prefix: \"$pre\"",
                  pos $$textref;
@@ -212,11 +212,11 @@ sub _match_bracketed($$$$$$)    # $textref, $pre, $ldel, $qdel, $quotelike, $rde
     {
         next if $$textref =~ m/\G\\./gcs;
 
-        if ($$textref =~ m/\G($ldel)/gc)
+        if ($$textref =~ m/$ldel/gc)
         {
             push @nesting, $1;
         }
-        elsif ($$textref =~ m/\G($rdel)/gc)
+        elsif ($$textref =~ m/$rdel/gc)
         {
             my ($found, $brackettype) = ($1, $1);
             if ($#nesting < 0)
@@ -237,7 +237,7 @@ sub _match_bracketed($$$$$$)    # $textref, $pre, $ldel, $qdel, $quotelike, $rde
             }
             last if $#nesting < 0;
         }
-        elsif ($qdel && $$textref =~ m/\G([$qdel])/gc)
+        elsif ($qdel && $$textref =~ m/$qdel/gc)
         {
             $$textref =~ m/\G[^\\$1]*(?:\\.[^\\$1]*)*(\Q$1\E)/gsc and next;
             _failmsg "Unmatched embedded quote ($1)",
@@ -805,7 +805,7 @@ sub _match_quotelike($$$$)      # ($textref, $prepat, $allow_raw_match)
     if ($ldel1 =~ /[[(<{]/)
     {
         $rdel1 =~ tr/[({</])}>/;
-        defined(_match_bracketed($textref,"",$ldel1,"","",$rdel1))
+        defined(_match_bracketed($textref,qr/\G/,qr/\G($ldel1)/,"","",qr/\G($rdel1)/))
             || do { pos $$textref = $startpos; return };
         $ld2pos = pos($$textref);
         $rd1pos = $ld2pos-1;
@@ -842,7 +842,7 @@ sub _match_quotelike($$$$)      # ($textref, $prepat, $allow_raw_match)
         if ($ldel2 =~ /[[(<{]/)
         {
             pos($$textref)--;   # OVERCOME BROKEN LOOKAHEAD
-            defined(_match_bracketed($textref,"",$ldel2,"","",$rdel2))
+            defined(_match_bracketed($textref,qr/\G/,qr/\G($ldel2)/,"","",qr/\G($rdel2)/))
                 || do { pos $$textref = $startpos; return };
         }
         else
