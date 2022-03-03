@@ -43,7 +43,6 @@ Exporter::export_ok_tags('ALL');
 
 sub _match_bracketed($$$$$$);
 sub _match_variable($$);
-sub _match_codeblock($$$$$$$);
 sub _match_quotelike($$$$);
 
 # HANDLE RETURN VALUES IN VARIOUS CONTEXTS
@@ -479,7 +478,7 @@ sub _match_variable($$)
         my $deref = $1;
 
         unless ($$textref =~ m/\G\s*(?:::|')?(?:[_a-z]\w*(?:::|'))*[_a-z]\w*/gci
-            or _match_codeblock($textref, qr/\G()/, '\{', '\}', '\{', '\}', 0)
+            or _match_codeblock($textref, qr/\G()/, '\{', qr/\G\s*(\})/, '\{', '\}', 0)
             or $deref eq '$#' or $deref eq '$$' )
         {
             _failmsg "Bad identifier after dereferencer", pos $$textref;
@@ -493,10 +492,10 @@ sub _match_variable($$)
         next if $$textref =~ m/\G\s*(?:->)?\s*[{]\w+[}]/gc;
         next if _match_codeblock($textref,
                                  qr/\G(\s*->\s*(?:[_a-zA-Z]\w+\s*)?)/,
-                                 qr/[({[]/, qr/[)}\]]/,
+                                 qr/[({[]/, qr/\G\s*([)}\]])/,
                                  qr/[({[]/, qr/[)}\]]/, 0);
         next if _match_codeblock($textref,
-                                 qr/\G(\s*)/, qr/[{[]/, qr/[}\]]/,
+                                 qr/\G(\s*)/, qr/[{[]/, qr/\G\s*([}\]])/,
                                  qr/[{[]/, qr/[}\]]/, 0);
         next if _match_variable($textref,qr/\G(\s*->\s*)/);
         next if $$textref =~ m/\G\s*->\s*\w+(?![{([])/gc;
@@ -526,7 +525,7 @@ sub _ec_delims {
     }
     pos = $posbug;
     @{ $ec_delim_cache{$ldel_outer}{$ldel_inner} = [
-        $ldel_inner, $ldel_outer, $rdel_inner, $rdel_outer
+        $ldel_outer, qr/\G\s*($rdel_outer)/, $ldel_inner, $rdel_inner
     ] };
 }
 sub extract_codeblock (;$$$$$)
@@ -537,13 +536,9 @@ sub extract_codeblock (;$$$$$)
     my $pre = !defined $_[2] ? qr/\G(\s*)/ : qr/\G($_[2])/;
     my $ldel_outer = defined $_[3] ? $_[3] : $ldel_inner;
     my $rd         = $_[4];
-    ($ldel_inner, $ldel_outer, my $rdel_inner, my $rdel_outer) =
-        _ec_delims($ldel_inner, $ldel_outer);
+    my @delims = _ec_delims($ldel_inner, $ldel_outer);
 
-    my @match = _match_codeblock($textref, $pre,
-                                 $ldel_outer, $rdel_outer,
-                                 $ldel_inner, $rdel_inner,
-                                 $rd);
+    my @match = _match_codeblock($textref, $pre, @delims, $rd);
     return _fail($wantarray, $textref) unless @match;
     return _succeed($wantarray, $textref,
                     @match[2..3,4..5,0..1]    # MATCH, REMAINDER, PREFIX
@@ -551,7 +546,7 @@ sub extract_codeblock (;$$$$$)
 
 }
 
-sub _match_codeblock($$$$$$$)
+sub _match_codeblock
 {
     my ($textref, $pre, $ldel_outer, $rdel_outer, $ldel_inner, $rdel_inner, $rd) = @_;
     my $startpos = pos($$textref) = pos($$textref) || 0;
@@ -591,7 +586,7 @@ sub _match_codeblock($$$$$$$)
             next;
         }
 
-        if ($$textref =~ m/\G\s*($rdel_outer)/gc)
+        if ($$textref =~ m/$rdel_outer/gc)
         {
             unless ($matched = ($closing && $1 eq $closing) )
             {
@@ -626,7 +621,7 @@ sub _match_codeblock($$$$$$$)
             next;
         }
 
-        if ( _match_codeblock($textref, qr/\G(\s*)/, $ldel_inner, $rdel_inner, $ldel_inner, $rdel_inner, $rd) )
+        if ( _match_codeblock($textref, qr/\G(\s*)/, $ldel_inner, qr/\G\s*($rdel_inner)/, $ldel_inner, $rdel_inner, $rd) )
         {
             $patvalid = 1;
             next;
