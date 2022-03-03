@@ -510,14 +510,11 @@ sub _match_variable($$)
     );
 }
 
-sub extract_codeblock (;$$$$$)
-{
-    my $textref = defined $_[0] ? \$_[0] : \$_;
-    my $wantarray = wantarray;
-    my $ldel_inner = defined $_[1] ? $_[1] : '{';
-    my $pre = !defined $_[2] ? qr/\G(\s*)/ : qr/\G($_[2])/;
-    my $ldel_outer = defined $_[3] ? $_[3] : $ldel_inner;
-    my $rd         = $_[4];
+my %ec_delim_cache;
+sub _ec_delims {
+    my ($ldel_inner, $ldel_outer) = @_;
+    return @{ $ec_delim_cache{$ldel_outer}{$ldel_inner} }
+        if $ec_delim_cache{$ldel_outer}{$ldel_inner};
     my $rdel_inner = $ldel_inner;
     my $rdel_outer = $ldel_outer;
     my $posbug = pos;
@@ -528,6 +525,20 @@ sub extract_codeblock (;$$$$$)
         $_ = '('.join('|',map { quotemeta $_ } split('',$_)).')'
     }
     pos = $posbug;
+    @{ $ec_delim_cache{$ldel_outer}{$ldel_inner} = [
+        $ldel_inner, $ldel_outer, $rdel_inner, $rdel_outer
+    ] };
+}
+sub extract_codeblock (;$$$$$)
+{
+    my $textref = defined $_[0] ? \$_[0] : \$_;
+    my $wantarray = wantarray;
+    my $ldel_inner = defined $_[1] ? $_[1] : '{';
+    my $pre = !defined $_[2] ? qr/\G(\s*)/ : qr/\G($_[2])/;
+    my $ldel_outer = defined $_[3] ? $_[3] : $ldel_inner;
+    my $rd         = $_[4];
+    ($ldel_inner, $ldel_outer, my $rdel_inner, my $rdel_outer) =
+        _ec_delims($ldel_inner, $ldel_outer);
 
     my @match = _match_codeblock($textref, $pre,
                                  $ldel_outer, $rdel_outer,
