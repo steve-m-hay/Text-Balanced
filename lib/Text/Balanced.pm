@@ -149,33 +149,44 @@ sub extract_delimited (;$$$$)
                     $startpos, $prelen;                         # PREFIX
 }
 
-sub extract_bracketed (;$$$)
-{
-    my $textref = defined $_[0] ? \$_[0] : \$_;
-    my $ldel = defined $_[1] ? $_[1] : '{([<';
-    my $pre  = defined $_[2] ? qr/\G$_[2]/ : qr/\G\s*/;
-    my $wantarray = wantarray;
+my %eb_delim_cache;
+sub _eb_delims {
+    my ($ldel_orig) = @_;
+    return @{ $eb_delim_cache{$ldel_orig} } if $eb_delim_cache{$ldel_orig};
     my $qdel = "";
     my $quotelike;
+    my $ldel = $ldel_orig;
     $ldel =~ s/'//g and $qdel .= q{'};
     $ldel =~ s/"//g and $qdel .= q{"};
     $ldel =~ s/`//g and $qdel .= q{`};
     $ldel =~ s/q//g and $quotelike = 1;
     $ldel =~ tr/[](){}<>\0-\377/[[(({{<</ds;
     my $rdel = $ldel;
-    unless ($rdel =~ tr/[({</])}>/)
+    return @{ $eb_delim_cache{$ldel_orig} = [] } unless $rdel =~ tr/[({</])}>/;
+    my $posbug = pos;
+    $ldel = join('|', map { quotemeta $_ } split('', $ldel));
+    $rdel = join('|', map { quotemeta $_ } split('', $rdel));
+    pos = $posbug;
+    @{ $eb_delim_cache{$ldel_orig} = [
+        qr/\G($ldel)/, $qdel && qr/\G([$qdel])/, $quotelike, qr/\G($rdel)/
+    ] };
+}
+sub extract_bracketed (;$$$)
+{
+    my $textref = defined $_[0] ? \$_[0] : \$_;
+    my $ldel = defined $_[1] ? $_[1] : '{([<';
+    my $pre  = defined $_[2] ? qr/\G$_[2]/ : qr/\G\s*/;
+    my $wantarray = wantarray;
+    ($ldel, my $qdel, my $quotelike, my $rdel) = my @ret = _eb_delims($ldel);
+    unless (@ret)
     {
         return _fail $wantarray, $textref,
                      "Did not find a suitable bracket in delimiter: \"$_[1]\"",
                      0;
     }
-    my $posbug = pos;
-    $ldel = join('|', map { quotemeta $_ } split('', $ldel));
-    $rdel = join('|', map { quotemeta $_ } split('', $rdel));
-    pos = $posbug;
 
     my $startpos = pos $$textref || 0;
-    my @match = _match_bracketed($textref,$pre, qr/\G($ldel)/, $qdel && qr/\G([$qdel])/, $quotelike, qr/\G($rdel)/);
+    my @match = _match_bracketed($textref, $pre, $ldel, $qdel, $quotelike, $rdel);
 
     return _fail ($wantarray, $textref) unless @match;
 
