@@ -256,7 +256,7 @@ sub _match_bracketed($$$$$$)    # $textref, $pre, $ldel, $qdel, $quotelike, $rde
             pos $$textref = $startpos;
             return;
         }
-        elsif ($quotelike && _match_quotelike($textref,"",1,0))
+        elsif ($quotelike && _match_quotelike($textref,qr/\G()/,1,0))
         {
             next;
         }
@@ -593,7 +593,7 @@ sub _match_codeblock($$$$$$$)
         }
 
         if (_match_variable($textref,qr/\G(\s*)/) ||
-            _match_quotelike($textref,'\s*',$patvalid,$patvalid) )
+            _match_quotelike($textref,qr/\G(\s*)/,$patvalid,$patvalid) )
         {
             $patvalid = 0;
             next;
@@ -666,7 +666,7 @@ sub extract_quotelike (;$$)
 {
     my $textref = $_[0] ? \$_[0] : \$_;
     my $wantarray = wantarray;
-    my $pre  = defined $_[1] ? $_[1] : '\s*';
+    my $pre  = defined $_[1] ? qr/\G($_[1])/ : qr/\G(\s*)/;
 
     my @match = _match_quotelike($textref,$pre,1,0);
     return _fail($wantarray, $textref) unless @match;
@@ -679,7 +679,7 @@ sub extract_quotelike (;$$)
     );
 };
 
-sub _match_quotelike($$$$)      # ($textref, $prepat, $allow_raw_match)
+sub _match_quotelike($$$$)      # ($textref, $prepat, $allow_raw_match, $qmark)
 {
     my ($textref, $pre, $rawmatch, $qmark) = @_;
 
@@ -689,7 +689,7 @@ sub _match_quotelike($$$$)      # ($textref, $prepat, $allow_raw_match)
         $preld2pos,$ld2pos,$str2pos,$rd2pos,
         $modpos) = ( length($$textref), pos($$textref) = pos($$textref) || 0 );
 
-    unless ($$textref =~ m/\G($pre)/gc)
+    unless ($$textref =~ m/$pre/gc)
     {
         _failmsg qq{Did not find prefix /$pre/ at "} .
                      substr($$textref, pos($$textref), 20) .
