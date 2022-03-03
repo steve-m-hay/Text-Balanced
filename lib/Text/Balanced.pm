@@ -292,6 +292,7 @@ sub _revbracket($)
 
 my $XMLNAME = q{[a-zA-Z_:][a-zA-Z0-9_:.-]*};
 
+my $et_default_ldel = '<\w+(?:' . gen_delimited_pat(q{'"}) . '|[^>])*>';
 sub extract_tagged (;$$$$$) # ($text, $opentag, $closetag, $pre, \%options)
 {
     my $textref = defined $_[0] ? \$_[0] : \$_;
@@ -309,7 +310,7 @@ sub extract_tagged (;$$$$$) # ($text, $opentag, $closetag, $pre, \%options)
                 :                                    ''
                 ;
 
-    if (!defined $ldel) { $ldel = '<\w+(?:' . gen_delimited_pat(q{'"}) . '|[^>])*>'; }
+    $ldel = $et_default_ldel if !defined $ldel;
     $@ = undef;
 
     my @match = _match_tagged($textref, $pre, $ldel, $rdel, $omode, $bad, $ignore);
@@ -1018,7 +1019,7 @@ sub gen_extract_tagged # ($opentag, $closetag, $pre, \%options)
                 :                                    ''
                 ;
 
-    if (!defined $ldel) { $ldel = '<\w+(?:' . gen_delimited_pat(q{'"}) . '|[^>])*>'; }
+    $ldel = $et_default_ldel if !defined $ldel;
 
     my $posbug = pos;
     for ($ldel, $bad, $ignore) { $_ = qr/$_/ if $_ }
