@@ -286,7 +286,7 @@ sub extract_tagged (;$$$$$) # ($text, $opentag, $closetag, $pre, \%options)
     my $textref = defined $_[0] ? \$_[0] : \$_;
     my $ldel    = $_[1];
     my $rdel    = $_[2];
-    my $pre     = defined $_[3] ? $_[3] : '\s*';
+    my $pre     = defined $_[3] ? qr/\G($_[3])/ : qr/\G(\s*)/;
     my %options = defined $_[4] ? %{$_[4]} : ();
     my $omode   = defined $options{fail} ? $options{fail} : '';
     my $bad     = ref($options{reject}) eq 'ARRAY' ? join('|', @{$options{reject}})
@@ -316,7 +316,7 @@ sub _match_tagged       # ($$$$$$$)
 
     my ($startpos, $opentagpos, $textpos, $parapos, $closetagpos, $endpos) = ( pos($$textref) = pos($$textref)||0 );
 
-    unless ($$textref =~ m/\G($pre)/gc)
+    unless ($$textref =~ m/$pre/gc)
     {
         _failmsg "Did not find prefix: /$pre/", pos $$textref;
         goto failed;
@@ -995,7 +995,7 @@ sub gen_extract_tagged # ($opentag, $closetag, $pre, \%options)
 {
     my $ldel    = $_[0];
     my $rdel    = $_[1];
-    my $pre     = defined $_[2] ? $_[2] : '\s*';
+    my $pre     = defined $_[2] ? qr/\G($_[2])/ : qr/\G(\s*)/;
     my %options = defined $_[3] ? %{$_[3]} : ();
     my $omode   = defined $options{fail} ? $options{fail} : '';
     my $bad     = ref($options{reject}) eq 'ARRAY' ? join('|', @{$options{reject}})
@@ -1010,7 +1010,7 @@ sub gen_extract_tagged # ($opentag, $closetag, $pre, \%options)
     if (!defined $ldel) { $ldel = '<\w+(?:' . gen_delimited_pat(q{'"}) . '|[^>])*>'; }
 
     my $posbug = pos;
-    for ($ldel, $pre, $bad, $ignore) { $_ = qr/$_/ if $_ }
+    for ($ldel, $bad, $ignore) { $_ = qr/$_/ if $_ }
     pos = $posbug;
 
     my $closure = sub
