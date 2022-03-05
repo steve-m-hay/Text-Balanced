@@ -935,19 +935,17 @@ sub extract_multiple (;$$$$)    # ($text, $functions_ref, $max_fields, $ignoreun
         my $unkpos;
         FIELD: while (pos($$textref) < length($$textref))
         {
-            my ($field, $rem);
-            my @bits;
             foreach my $i ( 0..$#func )
             {
-                my $pref;
+                my ($field, $pref);
                 my ($class, $func) = ($class[$i], $func[$i]);
                 $lastpos = pos $$textref;
                 if (ref($func) eq 'CODE')
-                    { ($field,$rem,$pref) = @bits = $func->($$textref) }
+                    { ($field,undef,$pref) = $func->($$textref) }
                 elsif (ref($func) eq 'Text::Balanced::Extractor')
-                    { @bits = $field = $func->extract($$textref) }
+                    { $field = $func->extract($$textref) }
                 elsif( $$textref =~ m/$func[$i]/gc )
-                    { @bits = $field = defined($1)
+                    { $field = defined($1)
                         ? $1
                         : substr($$textref, $-[0], $+[0] - $-[0])
                     }
@@ -965,9 +963,7 @@ sub extract_multiple (;$$$$)    # ($text, $functions_ref, $max_fields, $ignoreun
                             last FIELD if @fields == $max;
                         }
                     }
-                    push @fields, $class
-                            ? bless (\$field, $class)
-                            : $field;
+                    push @fields, $class ? bless(\$field, $class) : $field;
                     $firstpos = $lastpos unless defined $firstpos;
                     $lastpos = pos $$textref;
                     last FIELD if @fields == $max;
