@@ -924,9 +924,6 @@ sub extract_multiple (;$$$$)    # ($text, $functions_ref, $max_fields, $ignoreun
             $max = 1
         }
 
-        my $unkpos;
-        my $class;
-
         my @class;
         foreach my $func ( @func )
         {
@@ -935,6 +932,7 @@ sub extract_multiple (;$$$$)    # ($text, $functions_ref, $max_fields, $ignoreun
             $func = qr/\G$func/ if !$ref_not_regex{ref $func};
         }
 
+        my $unkpos;
         FIELD: while (pos($$textref) < length($$textref))
         {
             my ($field, $rem);
@@ -942,8 +940,7 @@ sub extract_multiple (;$$$$)    # ($text, $functions_ref, $max_fields, $ignoreun
             foreach my $i ( 0..$#func )
             {
                 my $pref;
-                my $func = $func[$i];
-                $class = $class[$i];
+                my ($class, $func) = ($class[$i], $func[$i]);
                 $lastpos = pos $$textref;
                 if (ref($func) eq 'CODE')
                     { ($field,$rem,$pref) = @bits = $func->($$textref) }
