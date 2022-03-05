@@ -930,15 +930,8 @@ sub extract_multiple (;$$$$)    # ($text, $functions_ref, $max_fields, $ignoreun
         my @class;
         foreach my $func ( @func )
         {
-            if (ref($func) eq 'HASH')
-            {
-                push @class, (keys %$func)[0];
-                $func = (values %$func)[0];
-            }
-            else
-            {
-                push @class, undef;
-            }
+            push @class, undef;
+            ($class[-1], $func) = %$func if ref($func) eq 'HASH';
             $func = qr/\G$func/ if !$ref_not_regex{ref $func};
         }
 
