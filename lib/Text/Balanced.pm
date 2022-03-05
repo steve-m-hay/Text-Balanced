@@ -1477,7 +1477,7 @@ A string to be processed (C<$_> if the string is omitted or C<undef>)
 
 =item 2.
 
-A string specifying a pattern to be matched as the opening tag.
+A string specifying a pattern (i.e. regex) to be matched as the opening tag.
 If the pattern string is omitted (or C<undef>) then a pattern
 that matches any standard XML tag is used.
 
