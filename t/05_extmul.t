@@ -1,54 +1,20 @@
-# Before `make install' is performed this script should be runnable with
-# `make test'. After `make install' it should work as `perl test.pl'
-
 use 5.008001;
 
 use strict;
 use warnings;
-
-######################### We start with some black magic to print on failure.
-
-# Change 1..1 below to 1..last_test_to_print .
-# (It may become useful if the test is moved to ./t subdirectory.)
-
-my $loaded = 0;
-BEGIN { $| = 1; print "1..88\n"; }
-END {print "not ok 1\n" unless $loaded;}
+use Test::More;
 use Text::Balanced qw ( :ALL );
-$loaded = 1;
-print "ok 1\n";
-my $count=2;
-use vars qw( $DEBUG );
-sub debug { print "\t>>>",@_ if $DEBUG }
 
-######################### End of black magic.
+our $DEBUG;
+sub debug { print "\t>>>",@_ if $DEBUG }
 
 sub expect
 {
-    local $^W;
     my ($l1, $l2) = @_;
-
-    if (@$l1 != @$l2)
-    {
-        print "\@l1: ", join(", ", @$l1), "\n";
-        print "\@l2: ", join(", ", @$l2), "\n";
-        print "not ";
-    }
-    else
-    {
-        for (my $i = 0; $i < @$l1; $i++)
-        {
-            if ($l1->[$i] ne $l2->[$i])
-            {
-                print "field $i: '$l1->[$i]' ne '$l2->[$i]'\n";
-                print "not ";
-                last;
-            }
-        }
-    }
-
-    print "ok $count\n";
-    $count++;
+    is_deeply $l1, $l2 or do {
+        diag 'got:', explain $l1;
+        diag 'expected:', explain $l2;
+    };
 }
 
 sub divide
@@ -65,7 +31,6 @@ sub divide
     return @bits;
 
 }
-
 
 my $stdtext1 = q{$var = do {"val" && $val;};};
 
@@ -343,3 +308,5 @@ expect [ extract_multiple($y_falsematch, [
     ' = do { my ', '$i', '=1; my ', '$v', qw(= $$p{y} - $i), '; ', '$pb',
     ' = ', '$pa', '(,', '$i', ",) }; }\n",
   ];
+
+done_testing;
