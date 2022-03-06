@@ -297,7 +297,7 @@ sub extract_tagged (;$$$$$) # ($text, $opentag, $closetag, $pre, \%options)
     my $textref = defined $_[0] ? \$_[0] : \$_;
     my $ldel    = $_[1];
     my $rdel    = $_[2];
-    my $pre     = defined $_[3] ? qr/\G($_[3])/ : qr/\G(\s*)/;
+    my $pre     = defined $_[3] ? qr/\G$_[3]/ : qr/\G\s*/;
     my %options = defined $_[4] ? %{$_[4]} : ();
     my $omode   = defined $options{fail} ? $options{fail} : '';
     my $bad     = ref($options{reject}) eq 'ARRAY' ? join('|', @{$options{reject}})
@@ -444,7 +444,7 @@ sub extract_variable (;$$)
 {
     my $textref = defined $_[0] ? \$_[0] : \$_;
     return ("","","") unless defined $$textref;
-    my $pre  = defined $_[1] ? qr/\G($_[1])/ : qr/\G(\s*)/;
+    my $pre  = defined $_[1] ? qr/\G$_[1]/ : qr/\G\s*/;
 
     my @match = _match_variable($textref,$pre);
 
@@ -492,13 +492,13 @@ sub _match_variable($$)
     {
         next if $$textref =~ m/\G\s*(?:->)?\s*[{]\w+[}]/gc;
         next if _match_codeblock($textref,
-                                 qr/\G(\s*->\s*(?:[_a-zA-Z]\w+\s*)?)/,
+                                 qr/\G\s*->\s*(?:[_a-zA-Z]\w+\s*)?/,
                                  qr/[({[]/, qr/\G\s*([)}\]])/,
                                  qr/[({[]/, qr/[)}\]]/, 0);
         next if _match_codeblock($textref,
-                                 qr/\G(\s*)/, qr/[{[]/, qr/\G\s*([}\]])/,
+                                 qr/\G\s*/, qr/[{[]/, qr/\G\s*([}\]])/,
                                  qr/[{[]/, qr/[}\]]/, 0);
-        next if _match_variable($textref,qr/\G(\s*->\s*)/);
+        next if _match_variable($textref,qr/\G\s*->\s*/);
         next if $$textref =~ m/\G\s*->\s*\w+(?![{([])/gc;
         last;
     }
@@ -534,7 +534,7 @@ sub extract_codeblock (;$$$$$)
     my $textref = defined $_[0] ? \$_[0] : \$_;
     my $wantarray = wantarray;
     my $ldel_inner = defined $_[1] ? $_[1] : '{';
-    my $pre = !defined $_[2] ? qr/\G(\s*)/ : qr/\G($_[2])/;
+    my $pre = !defined $_[2] ? qr/\G\s*/ : qr/\G$_[2]/;
     my $ldel_outer = defined $_[3] ? $_[3] : $ldel_inner;
     my $rd         = $_[4];
     my @delims = _ec_delims($ldel_inner, $ldel_outer);
@@ -599,8 +599,8 @@ sub _match_codeblock
             last;
         }
 
-        if (_match_variable($textref,qr/\G(\s*)/) ||
-            _match_quotelike($textref,qr/\G(\s*)/,$patvalid,$patvalid) )
+        if (_match_variable($textref,qr/\G\s*/) ||
+            _match_quotelike($textref,qr/\G\s*/,$patvalid,$patvalid) )
         {
             $patvalid = 0;
             next;
@@ -620,7 +620,7 @@ sub _match_codeblock
             next;
         }
 
-        if ( _match_codeblock($textref, qr/\G(\s*)/, $ldel_inner, qr/\G\s*($rdel_inner)/, $ldel_inner, $rdel_inner, $rd) )
+        if ( _match_codeblock($textref, qr/\G\s*/, $ldel_inner, qr/\G\s*($rdel_inner)/, $ldel_inner, $rdel_inner, $rd) )
         {
             $patvalid = 1;
             next;
@@ -672,7 +672,7 @@ sub extract_quotelike (;$$)
 {
     my $textref = $_[0] ? \$_[0] : \$_;
     my $wantarray = wantarray;
-    my $pre  = defined $_[1] ? qr/\G($_[1])/ : qr/\G(\s*)/;
+    my $pre  = defined $_[1] ? qr/\G$_[1]/ : qr/\G\s*/;
 
     my @match = _match_quotelike($textref,$pre,1,0);
     return _fail($wantarray, $textref) unless @match;
@@ -998,7 +998,7 @@ sub gen_extract_tagged # ($opentag, $closetag, $pre, \%options)
 {
     my $ldel    = $_[0];
     my $rdel    = $_[1];
-    my $pre     = defined $_[2] ? qr/\G($_[2])/ : qr/\G(\s*)/;
+    my $pre     = defined $_[2] ? qr/\G$_[2]/ : qr/\G\s*/;
     my %options = defined $_[3] ? %{$_[3]} : ();
     my $omode   = defined $options{fail} ? $options{fail} : '';
     my $bad     = ref($options{reject}) eq 'ARRAY' ? join('|', @{$options{reject}})
