@@ -39,6 +39,9 @@ while (defined($str = <DATA>))
     ($neg ? \&unlike : \&like)->( $str, qr/\A;/);
 }
 
+my @res = extract_variable('${a}');
+is $res[0], '${a}' or diag "error was: $@";
+
 done_testing;
 
 __DATA__

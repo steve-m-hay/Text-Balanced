@@ -479,7 +479,8 @@ sub _match_variable($$)
 
         unless ($$textref =~ m/\G\s*(?:::|')?(?:[_a-z]\w*(?:::|'))*[_a-z]\w*/gci
             or _match_codeblock($textref, qr/\G()/, '\{', qr/\G\s*(\})/, '\{', '\}', 0)
-            or $deref eq '$#' or $deref eq '$$' )
+            or $deref eq '$#' or $deref eq '$$'
+            or pos($$textref) == length $$textref )
         {
             _failmsg "Bad identifier after dereferencer", pos $$textref;
             pos $$textref = $startpos;

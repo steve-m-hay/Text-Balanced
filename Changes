@@ -2,6 +2,7 @@
 - fix "<<=" being seen as heredoc, misparsing of "y=>" (#6)
 - tweak docs to clarify extract_tagged takes regexes (#3) - thanks @jhannah for report
 - modernise tests (#2)
+- fix extract_variable not recognising ${var} end of string (RT#70007)
 
 2.04 2020-12-11
 
