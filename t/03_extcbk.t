@@ -67,6 +67,9 @@ __DATA__
 { 1; };
 { $a = 1; };
 
+# USING: extract_codeblock($str, '()');
+(($x || 2)); split /z/, $y
+(($x // 2)); split /z/, $y
 
 # USING: extract_codeblock($str,undef,'=*');
 ========{$a=1};

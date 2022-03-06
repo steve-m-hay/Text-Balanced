@@ -544,7 +544,6 @@ sub extract_codeblock (;$$$$$)
     return _succeed($wantarray, $textref,
                     @match[2..3,4..5,0..1]    # MATCH, REMAINDER, PREFIX
     );
-
 }
 
 sub _match_codeblock
@@ -610,10 +609,9 @@ sub _match_codeblock
 
         # NEED TO COVER MANY MORE CASES HERE!!!
         if ($$textref =~ m#\G\s*(?!$ldel_inner)
-                                ( [-+*x/%^&|.]=?
+                                ( (?:\*\*|&&|\|\||<<|>>|//|[-+*x/%^&|.])=?
                                 | [!=]~
                                 | =(?!>)
-                                | (\*\*|&&|\|\||<<|>>)=?
                                 | split|grep|map|return
                                 | [([]
                                 )#gcx)
