@@ -38,6 +38,10 @@ while (defined($str = <DATA>))
     ($neg ? \&unlike : \&like)->( $str, qr/\A;/);
 }
 
+my $text = 'while($a == "test"){ print "true";}';
+my ($extracted, $remainder) = extract_delimited($text, '#');
+ok '' ne $@, 'string overload should not crash';
+
 done_testing;
 
 __DATA__

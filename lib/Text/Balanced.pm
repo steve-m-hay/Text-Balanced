@@ -1041,7 +1041,9 @@ sub extract($$) # ($self, $text)
 
 package Text::Balanced::ErrorMsg;
 
-use overload '""' => sub { "$_[0]->{error}, detected at offset $_[0]->{pos}" };
+use overload
+    '""' => sub { "$_[0]->{error}, detected at offset $_[0]->{pos}" },
+    fallback => 1;
 
 1;
 
