@@ -684,9 +684,9 @@ sub extract_quotelike (;$$)
     );
 };
 
-sub _match_quotelike($$$$)      # ($textref, $prepat, $allow_raw_match, $qmark)
+sub _match_quotelike($$$$)      # ($textref, $prepat, $allow_slash_match, $allow_qmark_match)
 {
-    my ($textref, $pre, $rawmatch, $qmark) = @_;
+    my ($textref, $pre, $allow_slash_match, $allow_qmark_match) = @_;
 
     my ($textlen,$startpos,
         $oppos,
@@ -707,8 +707,8 @@ sub _match_quotelike($$$$)      # ($textref, $prepat, $allow_raw_match, $qmark)
     my $initial = substr($$textref,$oppos,1);
 
     if ($initial && $initial =~ m|^[\"\'\`]|
-                 || $rawmatch && $initial =~ m|^/|
-                 || $qmark && $initial =~ m|^\?|)
+                 || $allow_slash_match && $initial =~ m|^/|
+                 || $allow_qmark_match && $initial =~ m|^\?|)
     {
         unless ($$textref =~ m/ \Q$initial\E [^\\$initial]* (\\.[^\\$initial]*)* \Q$initial\E /gcsx)
         {
