@@ -6,6 +6,7 @@
 - fix string-comparing $@ causing exception (RT#74994)
 - docs updated to correct CSV example (RT#140408) - thanks @djerius
 - fix extract_codeblock being confused by // (RT#78313)
+- improve here-doc detection (RT#74714)
 
 2.04 2020-12-11
 

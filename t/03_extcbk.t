@@ -48,6 +48,9 @@ __DATA__
 
 # USING: extract_codeblock($str);
 { $data[4] =~ /['"]/; };
+{1<<2};
+{1<<2};\n
+{1<<2};\n\n
 
 # USING: extract_codeblock($str,'<>');
 < %x = ( try => "this") >;
