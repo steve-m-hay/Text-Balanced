@@ -52,6 +52,10 @@ __DATA__
 {1<<2};
 {1<<2};\n
 {1<<2};\n\n
+{ $a = /\}/; };
+{ sub { $_[0] /= $_[1] } };  # / here
+{ 1; };
+{ $a = 1; };
 
 # USING: extract_codeblock($str,'<>');
 < %x = ( try => "this") >;
@@ -63,13 +67,6 @@ __DATA__
 
 # THIS SHOULD FAIL
 < %x = do { $try > 10 } >;
-
-# USING: extract_codeblock($str);
-
-{ $a = /\}/; };
-{ sub { $_[0] /= $_[1] } };  # / here
-{ 1; };
-{ $a = 1; };
 
 # USING: extract_codeblock($str, '()');
 (($x || 2)); split /z/, $y
