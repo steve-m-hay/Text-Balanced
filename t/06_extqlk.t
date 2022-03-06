@@ -22,6 +22,7 @@ while (defined($str = <DATA>))
     elsif (!$str || $str =~ /\A#/)              { $neg = 0; next }
     my $setup_cmd = ($str =~ s/\A\{(.*)\}//) ? $1 : '';
     my $tests = 'sl';
+    my $orig_str = $str;
     $str =~ s/\\n/\n/g;
     my $orig = $str;
 
@@ -36,7 +37,7 @@ while (defined($str = <DATA>))
         debug "\t  got:\n" . join "", map { "\t\t\t$_: [" . esc($res[$_]) . "]\n"} (0..$#res);
         debug "\t left: [" . esc($str) . "]\n";
         debug "\t  pos: [" . esc(substr($str,pos($str))) . "...]\n";
-        ($neg ? \&isnt : \&is)->(substr($str,pos($str)||0,1), ';');
+        ($neg ? \&isnt : \&is)->(substr($str,pos($str)||0,1), ';', "$orig_str matched list");
     }
 
     eval $setup_cmd if $setup_cmd ne '';
@@ -49,7 +50,7 @@ while (defined($str = <DATA>))
         $var = "<undef>" unless defined $var;
         debug "\t scalar got: [" . esc($var) . "]\n";
         debug "\t scalar left: [" . esc($str) . "]\n";
-        ($neg ? \&unlike : \&like)->( $str, qr/\A;/);
+        ($neg ? \&unlike : \&like)->( $str, qr/\A;/, "$orig_str matched scalar");
     }
 }
 

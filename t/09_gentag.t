@@ -16,6 +16,7 @@ my $str;
 while (defined($str = <DATA>))
 {
     chomp $str;
+    my $orig_str = $str;
     $str =~ s/\\n/\n/g;
     if ($str =~ s/\A# USING://)
     {
@@ -40,7 +41,7 @@ while (defined($str = <DATA>))
     is $@, '', 'no error';
     debug "\t list got: [" . join("|",map {defined $_ ? $_ : '<undef>'} @res) . "]\n";
     debug "\t list left: [$str]\n";
-    ($neg ? \&isnt : \&is)->(substr($str,pos($str)||0,1), ';');
+    ($neg ? \&isnt : \&is)->(substr($str,pos($str)||0,1), ';', "$orig_str matched list");
 
     pos $str = 0;
     $var = eval { scalar f($str) };
@@ -48,7 +49,7 @@ while (defined($str = <DATA>))
     $var = "<undef>" unless defined $var;
     debug "\t scalar got: [$var]\n";
     debug "\t scalar left: [$str]\n";
-    ($neg ? \&unlike : \&like)->( $str, qr/\A;/);
+    ($neg ? \&unlike : \&like)->( $str, qr/\A;/, "$orig_str matched scalar");
 }
 
 done_testing;

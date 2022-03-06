@@ -571,7 +571,7 @@ sub _match_codeblock
     my $closing = $1;
        $closing =~ tr/([<{/)]>}/;
     my $matched;
-    my $patvalid = 1;
+    my $patvalid = 1; # is a quotelike /.../ pattern valid at this point?
     while (pos($$textref) < length($$textref))
     {
         $matched = '';
@@ -605,7 +605,6 @@ sub _match_codeblock
             $patvalid = 0;
             next;
         }
-
 
         # NEED TO COVER MANY MORE CASES HERE!!!
         if ($$textref =~ m#\G\s*(?!$ldel_inner)

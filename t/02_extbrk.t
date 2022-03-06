@@ -19,6 +19,7 @@ while (defined($str = <DATA>))
     if ($str =~ s/\A# USING://) { $neg = 0; $cmd = $str; next; }
     elsif ($str =~ /\A# TH[EI]SE? SHOULD FAIL/) { $neg = 1; next; }
     elsif (!$str || $str =~ /\A#/) { $neg = 0; next }
+    my $orig_str = $str;
     $str =~ s/\\n/\n/g;
     debug "\tUsing: $cmd\n";
     debug "\t   on: [$str]\n";
@@ -26,7 +27,7 @@ while (defined($str = <DATA>))
     my $var = eval "() = $cmd";
     debug "\t list got: [$var]\n";
     debug "\t list left: [$str]\n";
-    ($neg ? \&isnt : \&is)->(substr($str,pos($str)||0,1), ';');
+    ($neg ? \&isnt : \&is)->(substr($str,pos($str)||0,1), ';', "$orig_str matched list");
     diag $@ if $@ && $DEBUG;
 
     pos $str = 0;
@@ -34,7 +35,7 @@ while (defined($str = <DATA>))
     $var = "<undef>" unless defined $var;
     debug "\t scalar got: [$var]\n";
     debug "\t scalar left: [$str]\n";
-    ($neg ? \&unlike : \&like)->( $str, qr/\A;/);
+    ($neg ? \&unlike : \&like)->( $str, qr/\A;/, "$orig_str matched scalar");
     diag $@ if $@ && $DEBUG;
 }
 
