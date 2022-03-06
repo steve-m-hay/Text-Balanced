@@ -1868,7 +1868,8 @@ C<"extract_quotelike">.
 C<extract_codeblock> takes the same initial three parameters as C<extract_bracketed>:
 a text to process, a set of delimiter brackets to look for, and a prefix to
 match first. It also takes an optional fourth parameter, which allows the
-outermost delimiter brackets to be specified separately (see below).
+outermost delimiter brackets to be specified separately (see below),
+and a fifth parameter used only by L<Parse::RecDescent>.
 
 Omitting the first argument (input text) means process C<$_> instead.
 Omitting the second argument (delimiter brackets) indicates that only C<'{'> is to be used.
