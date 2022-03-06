@@ -3,7 +3,7 @@ use 5.008001;
 use strict;
 use warnings;
 use Test::More;
-use Text::Balanced qw ( extract_delimited );
+use Text::Balanced qw ( extract_delimited extract_multiple );
 
 our $DEBUG;
 sub debug { print "\t>>>",@_ if $DEBUG }
@@ -41,6 +41,15 @@ while (defined($str = <DATA>))
 my $text = 'while($a == "test"){ print "true";}';
 my ($extracted, $remainder) = extract_delimited($text, '#');
 ok '' ne $@, 'string overload should not crash';
+
+$text = "a,'x b',c";
+my @fields = extract_multiple($text,
+ [
+   sub { extract_delimited($_[0],q{'"}) },
+   qr/([^,]+)/,
+ ],
+ undef,1);
+is_deeply \@fields, ['a', "'x b'", 'c'] or diag 'got: ', explain \@fields;
 
 done_testing;
 

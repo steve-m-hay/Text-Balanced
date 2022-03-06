@@ -4,6 +4,7 @@
 - modernise tests (#2)
 - fix extract_variable not recognising ${var} end of string (RT#70007)
 - fix string-comparing $@ causing exception (RT#74994)
+- docs updated to correct CSV example (RT#140408) - thanks @djerius
 
 2.04 2020-12-11
 

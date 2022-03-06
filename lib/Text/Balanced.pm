@@ -2079,12 +2079,14 @@ operator (and removes it from $text):
 
 Finally, here is yet another way to do comma-separated value parsing:
 
+        $csv_text = "a,'x b',c";
         @fields = extract_multiple($csv_text,
                                   [
                                         sub { extract_delimited($_[0],q{'"}) },
-                                        qr/([^,]+)(.*)/,
+                                        qr/([^,]+)/,
                                   ],
                                   undef,1);
+        # @fields is now ('a', "'x b'", 'c')
 
 The list in the second argument means:
 I<"Try and extract a ' or " delimited string, otherwise extract anything up to a comma...">.
