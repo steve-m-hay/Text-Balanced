@@ -2100,7 +2100,7 @@ just make the last parameter undefined (or remove it).
 =item C<gen_delimited_pat>
 
 The C<gen_delimited_pat> subroutine takes a single (string) argument and
-   > builds a Friedl-style optimized regex that matches a string delimited
+builds a Friedl-style optimized regex that matches a string delimited
 by any one of the characters in the single argument. For example:
 
         gen_delimited_pat(q{'"})
