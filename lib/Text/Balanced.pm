@@ -741,7 +741,7 @@ sub _match_quotelike($$$$)      # ($textref, $prepat, $allow_slash_match, $allow
         );
     }
 
-    unless ($$textref =~ m{\G(\b(?:m|s|qq|qx|qw|q|qr|tr|y)\b(?=\s*\S)|<<(?=[a-zA-Z]|\s*['"`;]))}gc)
+    unless ($$textref =~ m{\G(\b(?:m|s|qq|qx|qw|q|qr|tr|y)\b(?=\s*\S)|<<(?=[a-zA-Z]|\s*['"`;,]))}gc)
     {
         _failmsg q{No quotelike operator found after prefix at "} .
                      substr($$textref, pos($$textref), 20) .

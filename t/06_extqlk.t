@@ -59,6 +59,11 @@ $_ = qq(s{}{});
 my @z = extract_quotelike();
 isnt $z[0], '';
 
+@z = extract_quotelike("<<, 1; done()\nline1\nline2\n\n and next");
+like $z[1], qr/\A,/, 'implied heredoc with ,' or do {
+  diag "error: '$@'\ngot: ", explain \@z;
+};
+
 done_testing;
 
 __DATA__
