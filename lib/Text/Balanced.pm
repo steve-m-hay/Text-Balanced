@@ -917,6 +917,16 @@ my $def_func = [
 ];
 my %ref_not_regex = map +($_=>1), qw(CODE Text::Balanced::Extractor);
 
+sub _update_patvalid {
+    my ($textref, $text) = @_;
+    if ($ref2patvalid{$textref} && $text =~ m/$RE_NUM\s*$/)
+    {
+        $ref2patvalid{$textref} = 0;
+    } elsif (!$ref2patvalid{$textref} && $text =~ m/$RE_ALLOW_PAT\s*$/)
+    {
+        $ref2patvalid{$textref} = 1;
+    }
+}
 sub extract_multiple (;$$$$)    # ($text, $functions_ref, $max_fields, $ignoreunknown)
 {
     my $textref = defined($_[0]) ? \$_[0] : \$_;
@@ -981,6 +991,7 @@ sub extract_multiple (;$$$$)    # ($text, $functions_ref, $max_fields, $ignoreun
                         }
                     }
                     push @fields, $class ? bless(\$field, $class) : $field;
+                    _update_patvalid($textref, $fields[-1]);
                     $firstpos = $lastpos unless defined $firstpos;
                     $lastpos = pos $$textref;
                     last FIELD if @fields == $max;
@@ -991,21 +1002,7 @@ sub extract_multiple (;$$$$)    # ($text, $functions_ref, $max_fields, $ignoreun
             {
                 $unkpos = pos($$textref)-1
                     unless $igunk || defined $unkpos;
-                if (
-                    $ref2patvalid{$textref} &&
-                    substr($$textref, $unkpos, pos($$textref)-$unkpos)
-                        =~ m/$RE_NUM$/
-                )
-                {
-                    $ref2patvalid{$textref} = 0;
-                } elsif (
-                    !$ref2patvalid{$textref} &&
-                    substr($$textref, $unkpos, pos($$textref)-$unkpos)
-                        =~ m/$RE_ALLOW_PAT$/
-                )
-                {
-                    $ref2patvalid{$textref} = 1;
-                }
+                _update_patvalid($textref, substr $$textref, $unkpos, pos($$textref)-$unkpos);
             }
         }
 

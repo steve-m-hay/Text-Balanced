@@ -298,13 +298,15 @@ my $var = 10 / 3; if ($var =~
   /\./) { decimal() ;}
 EOF
 my $comment = qr/(?<![\$\@%])#.*/;
+my $id = qr/\b(?!([ysm]|q[rqxw]?|tr)\b)\w+/;
 expect [ extract_multiple($slashmatch, [
   $comment,
   \&extract_variable,
+  $id,
   \&extract_quotelike,
 ]) ],
-  [ 'my ', '$var', ' = 10 / 3; if (', '$var', " =~\n  ", '# a comment',
-    "\n  ", '/\\./', ") { decimal() ;}\n"
+  [ 'my', ' ', '$var', ' = ', '10', ' / ', '3', '; ', 'if', ' (', '$var',
+    " =~\n  ", '# a comment', "\n  ", '/\\./', ') { ', 'decimal', "() ;}\n"
   ];
 
 done_testing;
