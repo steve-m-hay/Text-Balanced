@@ -41,7 +41,6 @@ Exporter::export_ok_tags('ALL');
 
 # PROTOTYPES
 
-sub _match_bracketed($$$$$$);
 sub _match_variable($$);
 sub _match_quotelike($$$$);
 
@@ -176,7 +175,7 @@ sub extract_bracketed (;$$$)
     my $ldel = defined $_[1] ? $_[1] : '{([<';
     my $pre  = defined $_[2] ? qr/\G$_[2]/ : qr/\G\s*/;
     my $wantarray = wantarray;
-    ($ldel, my $qdel, my $quotelike, my $rdel) = my @ret = _eb_delims($ldel);
+    my @ret = _eb_delims($ldel);
     unless (@ret)
     {
         return _fail $wantarray, $textref,
@@ -185,7 +184,7 @@ sub extract_bracketed (;$$$)
     }
 
     my $startpos = pos $$textref || 0;
-    my @match = _match_bracketed($textref, $pre, $ldel, $qdel, $quotelike, $rdel);
+    my @match = _match_bracketed($textref, $pre, @ret);
 
     return _fail ($wantarray, $textref) unless @match;
 
@@ -196,7 +195,7 @@ sub extract_bracketed (;$$$)
                     );
 }
 
-sub _match_bracketed($$$$$$)    # $textref, $pre, $ldel, $qdel, $quotelike, $rdel
+sub _match_bracketed    # $textref, $pre, $ldel, $qdel, $quotelike, $rdel
 {
     my ($textref, $pre, $ldel, $qdel, $quotelike, $rdel) = @_;
     my ($startpos, $ldelpos, $endpos) = (pos $$textref = pos $$textref||0);
