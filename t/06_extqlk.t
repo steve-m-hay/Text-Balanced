@@ -75,7 +75,6 @@ __DATA__
 'b';
 `cc`;
 
-
 <<EOHERE; done();\nline1\nline2\nEOHERE\n; next;
      <<EOHERE; done();\nline1\nline2\nEOHERE\n; next;
 <<"EOHERE"; done()\nline1\nline2\nEOHERE\n and next

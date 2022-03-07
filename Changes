@@ -7,6 +7,7 @@
 - docs updated to correct CSV example (RT#140408) - thanks @djerius
 - fix extract_codeblock being confused by // (RT#78313)
 - improve here-doc detection (RT#74714)
+- fix extract_multiple to track whether to allow /.../ as quotelike (RT#5722)
 
 2.04 2020-12-11
 

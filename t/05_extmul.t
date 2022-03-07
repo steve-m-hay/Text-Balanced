@@ -270,4 +270,41 @@ expect [ extract_multiple($y_falsematch, [
     ' = ', '$pa', '(,', '$i', ",) }; }\n",
   ];
 
+my $slashmatch = <<'EOF'; # wrong in 2.04
+my $var = 10 / 3; if ($var !~ /\./) { decimal() ;}
+EOF
+my @expect_slash = ('my ', '$var', ' = 10 / 3; if (', '$var', " !~ ",
+  '/\\./', ") { decimal() ;}\n"
+);
+expect [ extract_multiple($slashmatch, [
+  \&extract_variable,
+  \&extract_quotelike,
+]) ],
+  \@expect_slash;
+
+$slashmatch = <<'EOF'; # wrong in 2.04
+my $var = 10 / 3; if ($var =~ /\./) { decimal() ;}
+EOF
+$expect_slash[4] = " =~ ";
+expect [ extract_multiple($slashmatch, [
+  \&extract_variable,
+  \&extract_quotelike,
+]) ],
+  \@expect_slash;
+
+$slashmatch = <<'EOF'; # wrong in 2.04
+my $var = 10 / 3; if ($var =~
+  # a comment
+  /\./) { decimal() ;}
+EOF
+my $comment = qr/(?<![\$\@%])#.*/;
+expect [ extract_multiple($slashmatch, [
+  $comment,
+  \&extract_variable,
+  \&extract_quotelike,
+]) ],
+  [ 'my ', '$var', ' = 10 / 3; if (', '$var', " =~\n  ", '# a comment',
+    "\n  ", '/\\./', ") { decimal() ;}\n"
+  ];
+
 done_testing;

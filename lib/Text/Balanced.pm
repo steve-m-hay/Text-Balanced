@@ -46,6 +46,7 @@ my $RE_ALLOW_PAT = qr#
     | [\(\[]
     )
 #x;
+my $RE_NUM = qr/\s*[+\-.0-9][+\-.0-9e]*/i; # numerical constant
 
 ## no critic (Subroutines::ProhibitSubroutinePrototypes)
 
@@ -53,6 +54,8 @@ my $RE_ALLOW_PAT = qr#
 
 sub _match_variable($$);
 sub _match_quotelike($$$$);
+
+my %ref2patvalid; # is a quotelike /.../ pattern valid at this point for given textref?
 
 # HANDLE RETURN VALUES IN VARIOUS CONTEXTS
 
@@ -140,6 +143,7 @@ sub gen_delimited_pat($;$)  # ($delimiters;$escapes)
 sub extract_delimited (;$$$$)
 {
     my $textref = defined $_[0] ? \$_[0] : \$_;
+    $ref2patvalid{$textref} = 1 if !pos($$textref); # reset
     my $wantarray = wantarray;
     my $del  = defined $_[1] ? $_[1] : qq{\'\"\`};
     my $pre  = defined $_[2] ? $_[2] : '\s*';
@@ -182,6 +186,7 @@ sub _eb_delims {
 sub extract_bracketed (;$$$)
 {
     my $textref = defined $_[0] ? \$_[0] : \$_;
+    $ref2patvalid{$textref} = 1 if !pos($$textref); # reset
     my $ldel = defined $_[1] ? $_[1] : '{([<';
     my $pre  = defined $_[2] ? qr/\G$_[2]/ : qr/\G\s*/;
     my $wantarray = wantarray;
@@ -264,8 +269,9 @@ sub _match_bracketed    # $textref, $pre, $ldel, $qdel, $quotelike, $rdel
             pos $$textref = $startpos;
             return;
         }
-        elsif ($quotelike && _match_quotelike($textref,qr/\G()/,1,0))
+        elsif ($quotelike && _match_quotelike($textref,qr/\G()/,undef,undef))
         {
+            $ref2patvalid{$textref} = 1; # back-compat
             next;
         }
 
@@ -304,6 +310,7 @@ my $et_default_ldel = '<\w+(?:' . gen_delimited_pat(q{'"}) . '|[^>])*>';
 sub extract_tagged (;$$$$$) # ($text, $opentag, $closetag, $pre, \%options)
 {
     my $textref = defined $_[0] ? \$_[0] : \$_;
+    $ref2patvalid{$textref} = 1 if !pos($$textref); # reset
     my $ldel    = $_[1];
     my $rdel    = $_[2];
     my $pre     = defined $_[3] ? qr/\G$_[3]/ : qr/\G\s*/;
@@ -453,6 +460,7 @@ sub extract_variable (;$$)
 {
     my $textref = defined $_[0] ? \$_[0] : \$_;
     return ("","","") unless defined $$textref;
+    $ref2patvalid{$textref} = 1 if !pos($$textref); # reset
     my $pre  = defined $_[1] ? qr/\G$_[1]/ : qr/\G\s*/;
 
     my @match = _match_variable($textref,$pre);
@@ -541,6 +549,7 @@ sub _ec_delims {
 sub extract_codeblock (;$$$$$)
 {
     my $textref = defined $_[0] ? \$_[0] : \$_;
+    $ref2patvalid{$textref} = 1 if !pos($$textref); # reset
     my $wantarray = wantarray;
     my $ldel_inner = defined $_[1] ? $_[1] : '{';
     my $pre = !defined $_[2] ? qr/\G\s*/ : qr/\G$_[2]/;
@@ -580,12 +589,13 @@ sub _match_codeblock
     my $closing = $1;
        $closing =~ tr/([<{/)]>}/;
     my $matched;
-    my $patvalid = 1; # is a quotelike /.../ pattern valid at this point?
+    my $patvalidref = \$ref2patvalid{$textref};
+    $$patvalidref = 1 if !defined $$patvalidref or !$startpos; # default, or reset
     while (pos($$textref) < length($$textref))
     {
         if ($rd && $$textref =~ m#\G(\Q(?)\E|\Q(s?)\E|\Q(s)\E)#gc)
         {
-            $patvalid = 0;
+            $$patvalidref = 0;
             next;
         }
 
@@ -608,21 +618,21 @@ sub _match_codeblock
         }
 
         if (_match_variable($textref,qr/\G\s*/) ||
-            _match_quotelike($textref,qr/\G\s*/,$patvalid,$patvalid) )
+            _match_quotelike($textref,qr/\G\s*/,undef,undef) )
         {
-            $patvalid = 0;
+            $$patvalidref = 0;
             next;
         }
 
         if ($$textref =~ m#\G\s*(?!$ldel_inner)$RE_ALLOW_PAT#gc)
         {
-            $patvalid = 1;
+            $$patvalidref = 1;
             next;
         }
 
         if ( _match_codeblock($textref, qr/\G\s*/, $ldel_inner, qr/\G\s*($rdel_inner)/, $ldel_inner, $rdel_inner, $rd) )
         {
-            $patvalid = 1;
+            $$patvalidref = 1;
             next;
         }
 
@@ -635,7 +645,7 @@ sub _match_codeblock
             last;
         }
 
-        $patvalid = 0;
+        $$patvalidref = 0;
         $$textref =~ m/\G\s*(\w+|[-=>]>|.|\Z)/gc;
     }
     continue { $@ = undef }
@@ -671,10 +681,11 @@ my %mods   = (
 sub extract_quotelike (;$$)
 {
     my $textref = $_[0] ? \$_[0] : \$_;
+    $ref2patvalid{$textref} = 1 if !pos($$textref); # reset
     my $wantarray = wantarray;
     my $pre  = defined $_[1] ? qr/\G$_[1]/ : qr/\G\s*/;
 
-    my @match = _match_quotelike($textref,$pre,1,0);
+    my @match = _match_quotelike($textref,$pre,undef,undef);
     return _fail($wantarray, $textref) unless @match;
     return _succeed($wantarray, $textref,
                     $match[2], $match[18]-$match[2],    # MATCH
@@ -685,9 +696,12 @@ sub extract_quotelike (;$$)
     );
 };
 
-sub _match_quotelike($$$$)      # ($textref, $prepat, $allow_slash_match, $allow_qmark_match)
+sub _match_quotelike($$$$)      # ($textref, $prepat, ignore rest)
 {
-    my ($textref, $pre, $allow_slash_match, $allow_qmark_match) = @_;
+    my ($textref, $pre) = @_;
+    my $patvalidref = \$ref2patvalid{$textref};
+    $$patvalidref = 1 if !defined $$patvalidref or !pos($$textref); # default, or reset
+    my $allow_slash_match = my $allow_qmark_match = $$patvalidref;
 
     my ($textlen,$startpos,
         $oppos,
@@ -729,6 +743,7 @@ sub _match_quotelike($$$$)      # ($textref, $prepat, $allow_slash_match, $allow
         }
 
         my $endpos = pos($$textref);
+        $$patvalidref = 0;
         return (
             $startpos,  $oppos-$startpos,       # PREFIX
             $oppos,     0,                      # NO OPERATOR
@@ -784,6 +799,7 @@ sub _match_quotelike($$$$)      # ($textref, $prepat, $allow_slash_match, $allow
         $rd1pos = pos($$textref);
         $$textref =~ m{\Q$label\E\n}gc;
         $ld2pos = pos($$textref);
+        $$patvalidref = 0;
         return (
             $startpos,  $oppos-$startpos,       # PREFIX
             $oppos,     length($op),            # OPERATOR
@@ -878,6 +894,7 @@ sub _match_quotelike($$$$)      # ($textref, $prepat, $allow_slash_match, $allow
 
     $$textref =~ m/\G($mods{$op})/gc;
     my $endpos = pos $$textref;
+    $$patvalidref = 0;
 
     return (
         $startpos,      $oppos-$startpos,       # PREFIX
@@ -903,6 +920,7 @@ my %ref_not_regex = map +($_=>1), qw(CODE Text::Balanced::Extractor);
 sub extract_multiple (;$$$$)    # ($text, $functions_ref, $max_fields, $ignoreunknown)
 {
     my $textref = defined($_[0]) ? \$_[0] : \$_;
+    $ref2patvalid{$textref} = 1 if !pos($$textref); # reset
     my $posbug = pos;
     my ($lastpos, $firstpos);
     my @fields = ();
@@ -973,6 +991,21 @@ sub extract_multiple (;$$$$)    # ($text, $functions_ref, $max_fields, $ignoreun
             {
                 $unkpos = pos($$textref)-1
                     unless $igunk || defined $unkpos;
+                if (
+                    $ref2patvalid{$textref} &&
+                    substr($$textref, $unkpos, pos($$textref)-$unkpos)
+                        =~ m/$RE_NUM$/
+                )
+                {
+                    $ref2patvalid{$textref} = 0;
+                } elsif (
+                    !$ref2patvalid{$textref} &&
+                    substr($$textref, $unkpos, pos($$textref)-$unkpos)
+                        =~ m/$RE_ALLOW_PAT$/
+                )
+                {
+                    $ref2patvalid{$textref} = 1;
+                }
             }
         }
 
