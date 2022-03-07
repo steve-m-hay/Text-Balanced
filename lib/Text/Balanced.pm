@@ -1017,7 +1017,7 @@ sub gen_extract_tagged # ($opentag, $closetag, $pre, \%options)
     my $closure = sub
     {
         my $textref = defined $_[0] ? \$_[0] : \$_;
-        my @match = Text::Balanced::_match_tagged($textref, $pre, $ldel, $rdel, $omode, $bad, $ignore);
+        my @match = _match_tagged($textref, $pre, $ldel, $rdel, $omode, $bad, $ignore);
 
         return _fail(wantarray, $textref) unless @match;
         return _succeed wantarray, $textref,
