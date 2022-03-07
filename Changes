@@ -1,3 +1,4 @@
+2.04_01 2022-03-05
 - performance optimisations (#5)
 - fix "<<=" being seen as heredoc, misparsing of "y=>" (#6)
 - tweak docs to clarify extract_tagged takes regexes (#3) - thanks @jhannah for report
