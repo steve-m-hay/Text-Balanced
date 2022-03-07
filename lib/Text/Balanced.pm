@@ -574,7 +574,6 @@ sub _match_codeblock
     my $patvalid = 1; # is a quotelike /.../ pattern valid at this point?
     while (pos($$textref) < length($$textref))
     {
-        $matched = '';
         if ($rd && $$textref =~ m#\G(\Q(?)\E|\Q(s?)\E|\Q(s)\E)#gc)
         {
             $patvalid = 0;
