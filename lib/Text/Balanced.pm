@@ -37,6 +37,16 @@ BEGIN {
 
 Exporter::export_ok_tags('ALL');
 
+# NEED TO COVER MANY MORE CASES HERE!!!
+my $RE_ALLOW_PAT = qr#
+    ( (?:\*\*|&&|\|\||<<|>>|//|[-+*x/%^&|.])=?
+    | [!=]~
+    | =(?!>)
+    | split|grep|map|return
+    | [\(\[]
+    )
+#x;
+
 ## no critic (Subroutines::ProhibitSubroutinePrototypes)
 
 # PROTOTYPES
@@ -604,14 +614,7 @@ sub _match_codeblock
             next;
         }
 
-        # NEED TO COVER MANY MORE CASES HERE!!!
-        if ($$textref =~ m#\G\s*(?!$ldel_inner)
-                                ( (?:\*\*|&&|\|\||<<|>>|//|[-+*x/%^&|.])=?
-                                | [!=]~
-                                | =(?!>)
-                                | split|grep|map|return
-                                | [([]
-                                )#gcx)
+        if ($$textref =~ m#\G\s*(?!$ldel_inner)$RE_ALLOW_PAT#gc)
         {
             $patvalid = 1;
             next;
