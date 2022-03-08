@@ -309,4 +309,16 @@ expect [ extract_multiple($slashmatch, [
     " =~\n  ", '# a comment', "\n  ", '/\\./', ') { ', 'decimal', "() ;}\n"
   ];
 
+$slashmatch = <<'EOF'; # wrong in 2.04_01
+my $r=(1-$PCi)/1+czip(1, -1)/czip(1, 1);
+EOF
+expect [ extract_multiple($slashmatch, [
+  \&extract_variable, $id, \&extract_quotelike,
+]) ],
+  [
+  'my', ' ', '$r', '=(', '1', '-', '$PCi', ')/', '1', '+',
+  'czip', '(', '1', ', -', '1', ')/',
+  'czip', '(', '1', ', ', '1', ");\n"
+  ];
+
 done_testing;

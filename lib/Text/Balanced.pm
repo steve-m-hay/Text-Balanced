@@ -919,7 +919,7 @@ my %ref_not_regex = map +($_=>1), qw(CODE Text::Balanced::Extractor);
 
 sub _update_patvalid {
     my ($textref, $text) = @_;
-    if ($ref2patvalid{$textref} && $text =~ m/$RE_NUM\s*$/)
+    if ($ref2patvalid{$textref} && $text =~ m/(?:$RE_NUM|[\)\]])\s*$/)
     {
         $ref2patvalid{$textref} = 0;
     } elsif (!$ref2patvalid{$textref} && $text =~ m/$RE_ALLOW_PAT\s*$/)

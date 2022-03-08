@@ -1,3 +1,5 @@
+- fix missed case of spotting expression ending ")" or "]"
+
 2.04_01 2022-03-05
 - performance optimisations (#5)
 - fix "<<=" being seen as heredoc, misparsing of "y=>" (#6)
