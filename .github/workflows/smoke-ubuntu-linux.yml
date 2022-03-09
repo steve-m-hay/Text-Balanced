@@ -39,7 +39,6 @@ jobs:
 
   linux:
     name: "linux ${{ matrix.perl-version }}"
-    needs: [ubuntu]
 
     runs-on: ubuntu-latest
 
