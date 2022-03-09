@@ -48,13 +48,6 @@ my $RE_ALLOW_PAT = qr#
 #x;
 my $RE_NUM = qr/\s*[+\-.0-9][+\-.0-9e]*/i; # numerical constant
 
-## no critic (Subroutines::ProhibitSubroutinePrototypes)
-
-# PROTOTYPES
-
-sub _match_variable($$);
-sub _match_quotelike($$$$);
-
 my %ref2patvalid; # is a quotelike /.../ pattern valid at this point for given textref?
 
 # HANDLE RETURN VALUES IN VARIOUS CONTEXTS
@@ -110,6 +103,7 @@ sub _succeed {
 }
 
 # BUILD A PATTERN MATCHING A SIMPLE DELIMITED STRING
+## no critic (Subroutines::ProhibitSubroutinePrototypes)
 
 sub gen_delimited_pat($;$)  # ($delimiters;$escapes)
 {
@@ -471,7 +465,7 @@ sub extract_variable (;$$)
                     @match[2..3,4..5,0..1];        # MATCH, REMAINDER, PREFIX
 }
 
-sub _match_variable($$)
+sub _match_variable
 {
 #  $#
 #  $^
@@ -696,7 +690,7 @@ sub extract_quotelike (;$$)
     );
 };
 
-sub _match_quotelike($$$$)      # ($textref, $prepat, ignore rest)
+sub _match_quotelike
 {
     my ($textref, $pre) = @_;
     my $patvalidref = \$ref2patvalid{$textref};
