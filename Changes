@@ -1,3 +1,4 @@
+2.04_02 2022-03-09
 - fix missed case of spotting expression ending ")" or "]"
 - fix too-loosely allowing ?...? as RE (often actually conditional op)
 
