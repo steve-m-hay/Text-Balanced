@@ -720,7 +720,7 @@ sub _match_quotelike
                  || $allow_slash_match && $initial eq '/'
                  || $allow_qmark_match && $initial eq '?')
     {
-        unless ($$textref =~ m/ \Q$initial\E [^\\$initial]* (\\.[^\\$initial]*)* \Q$initial\E /gcsx)
+        unless ($$textref =~ m/\G \Q$initial\E [^\\$initial]* (\\.[^\\$initial]*)* \Q$initial\E /gcsx)
         {
             _failmsg qq{Did not find closing delimiter to match '$initial' at "} .
                          substr($$textref, $oppos, 20) .
