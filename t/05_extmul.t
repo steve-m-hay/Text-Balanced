@@ -321,4 +321,51 @@ expect [ extract_multiple($slashmatch, [
   'czip', '(', '1', ', ', '1', ");\n"
   ];
 
+$slashmatch = <<'EOF'; # wrong in 2.04_01
+$ndim--; $min = $mdim <= $ndim ? 1 : 0; $min = $mdim < $ndim ? 1 : 0;
+EOF
+expect [ extract_multiple($slashmatch, [
+  \&extract_variable, $id, \&extract_quotelike,
+]) ],
+  [
+  '$ndim', '--; ',
+  '$min', ' = ', '$mdim', ' <= ', '$ndim', ' ? ', '1', ' : ', '0', '; ',
+  '$min', ' = ', '$mdim', ' < ', '$ndim', ' ? ', '1', ' : ', '0', ";\n"
+  ];
+
+$slashmatch = <<'EOF'; # wrong in 2.04_01
+$x->t->(($a))->sever;
+wantarray ? 1 : 0; $min = $var ? 0;
+EOF
+expect [ extract_multiple($slashmatch, [
+  \&extract_variable, $id, \&extract_quotelike,
+]) ],
+  [
+  '$x->t->(($a))->sever', ";\n",
+  'wantarray', ' ? ', '1', ' : ', '0', '; ',
+  '$min', ' = ', '$var', ' ? ', '0', ";\n",
+  ];
+
+$slashmatch = <<'EOF'; # wrong in 2.04_01
+$var //= 'default'; $x = 1 / 2;
+EOF
+expect [ extract_multiple($slashmatch, [
+  \&extract_variable, \&extract_quotelike,
+]) ],
+  [
+  '$var', ' //= ', '\'default\'', '; ', '$x', " = 1 / 2;\n"
+  ];
+
+$slashmatch = <<'EOF'; # wrong in 2.04_01
+$m; return wantarray ? ($m, $i) : $var ? $m : 0;
+EOF
+expect [ extract_multiple($slashmatch, [
+  \&extract_variable, \&extract_quotelike,
+]) ],
+  [
+  '$m',
+  '; return wantarray ? (', '$m', ', ', '$i', ') : ', '$var', ' ? ', '$m',
+  " : 0;\n"
+  ];
+
 done_testing;
