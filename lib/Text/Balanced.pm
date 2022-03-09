@@ -690,6 +690,7 @@ sub extract_quotelike (;$$)
     );
 };
 
+my %maybe_quote = map +($_=>1), qw(" ' `);
 sub _match_quotelike
 {
     my ($textref, $pre) = @_;
@@ -715,9 +716,9 @@ sub _match_quotelike
 
     my $initial = substr($$textref,$oppos,1);
 
-    if ($initial && $initial =~ m|^[\"\'\`]|
-                 || $allow_slash_match && $initial =~ m|^/|
-                 || $allow_qmark_match && $initial =~ m|^\?|)
+    if ($initial && $maybe_quote{$initial}
+                 || $allow_slash_match && $initial eq '/'
+                 || $allow_qmark_match && $initial eq '?')
     {
         unless ($$textref =~ m/ \Q$initial\E [^\\$initial]* (\\.[^\\$initial]*)* \Q$initial\E /gcsx)
         {
