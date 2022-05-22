@@ -1,18 +1,41 @@
+Revision history for Perl distribution Text-Balanced.
+
+2.05 2022-05-22
+
+    - Released with no further code changes.
+
 2.04_02 2022-03-09
-- fix missed case of spotting expression ending ")" or "]"
-- fix too-loosely allowing ?...? as RE (often actually conditional op)
+
+    - Fix missed case of spotting expression ending ")" or "]".  [mohawk2]
+
+    - Fix too-loosely allowing ?...? as RE (often actually conditional op).
+      [mohawk2]
 
 2.04_01 2022-03-05
-- performance optimisations (#5)
-- fix "<<=" being seen as heredoc, misparsing of "y=>" (#6)
-- tweak docs to clarify extract_tagged takes regexes (#3) - thanks @jhannah for report
-- modernise tests (#2)
-- fix extract_variable not recognising ${var} end of string (RT#70007)
-- fix string-comparing $@ causing exception (RT#74994)
-- docs updated to correct CSV example (RT#140408) - thanks @djerius
-- fix extract_codeblock being confused by // (RT#78313)
-- improve here-doc detection (RT#74714)
-- fix extract_multiple to track whether to allow /.../ as quotelike (RT#5722)
+
+    - Performance optimizations.  [mohawk2, PR#5]
+
+    - Fix "<<=" being seen as heredoc, misparsing of "y=>".  [mohawk2, PR#6]
+
+    - Update documentation to clarify extract_tagged() takes regexes.  [Jay
+      Hannah, GH#3]
+
+    - Modernize tests.  [mohawk2, GH#2]
+
+    - Fix extract_variable() not recognising ${var} end of string.  [Ed J, CPAN
+      RT#70007]
+
+    - Fix string-comparing $@ causing exception.  [Ed J, CPAN RT#74994)
+
+    - Update documentation to correct CSV example.  [djerius@cpan.org, CPAN
+      RT#140408]
+
+    - Fix extract_codeblock() being confused by //.  [Ed J, CPAN RT#78313]
+
+    - Improve here-doc detection.  [Ed J, CPAN RT#74714]
+
+    - Fix extract_multiple() to track whether to allow /.../ as quotelike.
+      [Ed J, CPAN RT#5722]
 
 2.04 2020-12-11
 
