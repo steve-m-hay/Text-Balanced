@@ -18,7 +18,7 @@ use Exporter ();
 
 use vars qw { $VERSION @ISA %EXPORT_TAGS };
 BEGIN {
-    $VERSION     = '2.05';
+    $VERSION     = '2.06';
     @ISA         = 'Exporter';
     %EXPORT_TAGS = (
         ALL => [ qw{
@@ -2418,11 +2418,11 @@ License or the Artistic License, as specified in the F<LICENCE> file.
 
 =head1 VERSION
 
-Version 2.05
+Version 2.06
 
 =head1 DATE
 
-22 May 2022
+TODO
 
 =head1 HISTORY
 
