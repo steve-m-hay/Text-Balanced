@@ -1,6 +1,7 @@
 # Copyright (C) 1997-2001 Damian Conway.  All rights reserved.
 # Copyright (C) 2009 Adam Kennedy.
-# Copyright (C) 2015 Steve Hay.  All rights reserved.
+# Copyright (C) 2015, 2022 Steve Hay and other contributors.  All rights
+# reserved.
 
 # This module is free software; you can redistribute it and/or modify it under
 # the same terms as Perl itself, i.e. under the terms of either the GNU General
@@ -17,7 +18,7 @@ use Exporter ();
 
 use vars qw { $VERSION @ISA %EXPORT_TAGS };
 BEGIN {
-    $VERSION     = '2.04_02';
+    $VERSION     = '2.05';
     @ISA         = 'Exporter';
     %EXPORT_TAGS = (
         ALL => [ qw{
@@ -2406,7 +2407,8 @@ Copyright (C) 1997-2001 Damian Conway.  All rights reserved.
 
 Copyright (C) 2009 Adam Kennedy.
 
-Copyright (C) 2015, 2020 Steve Hay.  All rights reserved.
+Copyright (C) 2015, 2020, 2022 Steve Hay and other contributors.  All rights
+reserved.
 
 =head1 LICENCE
 
@@ -2420,7 +2422,7 @@ Version 2.05
 
 =head1 DATE
 
-TODO
+22 May 2022
 
 =head1 HISTORY
 
