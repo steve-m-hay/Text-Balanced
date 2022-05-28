@@ -9,7 +9,7 @@ on:
   pull_request:
 
 jobs:
-  ubuntu:
+  author-tests:
     env:
       AUTHOR_TESTING: 1
 
@@ -38,7 +38,7 @@ jobs:
         run: make test
 
   linux:
-    name: "linux ${{ matrix.perl-version }}"
+    name: "linux ${{ matrix.perl-version }}.${{ matrix.downstream-test }}"
 
     runs-on: ubuntu-latest
 
@@ -61,6 +61,9 @@ jobs:
             "5.10",
             "5.8",
           ]
+        include:
+          - perl-version: '5.30'
+            downstream-test: true
 
     container:
       image: perl:${{ matrix.perl-version }}
@@ -77,3 +80,8 @@ jobs:
         run: perl Makefile.PL
       - name: make test
         run: make test
+      - name: downstream test
+        if: "matrix.downstream-test"
+        run: |
+          make install
+          cpanm Switch Inline::Struct || cat ~/.cpanm/build.log
