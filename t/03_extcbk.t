@@ -40,6 +40,13 @@ while (defined($str = <DATA>))
     ($neg ? \&unlike : \&like)->( $str, qr/\A;/, "$orig_str matched scalar");
 }
 
+my $grammar = <<'EOF';
+given 2 { when __ < 1 { ok(0) } else { ok(1) } }
+EOF
+pos $grammar = 8;
+my ($out) = Text::Balanced::_match_codeblock(\$grammar,qr/\s*/,qr/\{/,qr/\}/,qr/\{/,qr/\}/,undef);
+ok $out, 'Switch error from calling _match_codeblock';
+
 done_testing;
 
 __DATA__
