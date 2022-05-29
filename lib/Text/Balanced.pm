@@ -891,7 +891,7 @@ sub _match_quotelike
 
     $$textref =~ m/\G($mods{$op})/gc;
     my $endpos = pos $$textref;
-    $ref2qmarkvalid{$textref} = $ref2slashvalid{$textref} = 0;
+    $ref2qmarkvalid{$textref} = $ref2slashvalid{$textref} = undef;
 
     return (
         $startpos,      $oppos-$startpos,       # PREFIX
