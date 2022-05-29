@@ -657,6 +657,7 @@ sub _match_codeblock
         return;
     }
 
+    $ref2slashvalid{$textref} = $ref2qmarkvalid{$textref} = undef;
     my $endpos = pos($$textref);
     return ( $startpos, $codepos-$startpos,
              $codepos, $endpos-$codepos,
