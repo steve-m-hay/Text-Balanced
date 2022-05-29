@@ -18,7 +18,7 @@ use Exporter ();
 
 use vars qw { $VERSION @ISA %EXPORT_TAGS };
 BEGIN {
-    $VERSION     = '2.06';
+    $VERSION     = '2.05_01';
     @ISA         = 'Exporter';
     %EXPORT_TAGS = (
         ALL => [ qw{
