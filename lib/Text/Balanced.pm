@@ -41,6 +41,7 @@ Exporter::export_ok_tags('ALL');
 our $RE_PREREGEX_PAT = qr#(
     [!=]~
     | split|grep|map
+    | not|and|or|xor
 )#x;
 our $RE_EXPR_PAT = qr#(
     (?:\*\*|&&|\|\||<<|>>|//|[-+*x%^&|.])=?

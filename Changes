@@ -6,6 +6,8 @@ Revision history for Perl distribution Text-Balanced.
 
     - Fix resetting of whether "/" or "?" allowed to open regex [mohawk2, RT#142922]
 
+    - Fix false negative on /.../ regex after "and" [mohawk2, GH#7]
+
 2.05 2022-05-22
 
     - Released with no further code changes.
