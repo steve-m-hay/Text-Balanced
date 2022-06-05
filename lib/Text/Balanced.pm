@@ -18,7 +18,7 @@ use Exporter ();
 
 use vars qw { $VERSION @ISA %EXPORT_TAGS };
 BEGIN {
-    $VERSION     = '2.05_01';
+    $VERSION     = '2.06';
     @ISA         = 'Exporter';
     %EXPORT_TAGS = (
         ALL => [ qw{
@@ -2425,7 +2425,7 @@ Version 2.06
 
 =head1 DATE
 
-TODO
+05 Jun 2022
 
 =head1 HISTORY
 
