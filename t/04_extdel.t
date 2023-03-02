@@ -3,6 +3,7 @@ use 5.008001;
 use strict;
 use warnings;
 use Test::More;
+use Test::NoWarnings qw ( had_no_warnings );
 use Text::Balanced qw ( extract_delimited extract_multiple );
 
 our $DEBUG;
@@ -52,6 +53,7 @@ my @fields = extract_multiple($text,
  undef,1);
 is_deeply \@fields, ['a', "'x b'", 'c'] or diag 'got: ', explain \@fields;
 
+had_no_warnings;
 done_testing;
 
 __DATA__
