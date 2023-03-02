@@ -3,6 +3,7 @@ use 5.008001;
 use strict;
 use warnings;
 use Test::More;
+use Test::NoWarnings qw ( had_no_warnings );
 use Text::Balanced qw ( extract_quotelike );
 
 our $DEBUG;
@@ -64,6 +65,7 @@ like $z[1], qr/\A,/, 'implied heredoc with ,' or do {
   diag "error: '$@'\ngot: ", explain \@z;
 };
 
+had_no_warnings;
 done_testing;
 
 __DATA__
