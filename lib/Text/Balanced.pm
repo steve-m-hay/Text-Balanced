@@ -2368,7 +2368,7 @@ Bug reports and suggestions can be made on the CPAN Request Tracker at
 L<https://rt.cpan.org/Public/Bug/Report.html?Queue=Text-Balanced>.
 
 Currently active requests on the CPAN Request Tracker can be viewed at
-L<https://rt.cpan.org/Public/Dist/Display.html?Status=Active;Queue=Text-Balanced>.
+L<https://rt.cpan.org/Public/Dist/Display.html?Queue=Text-Balanced>.
 
 Please test this distribution.  See CPAN Testers Reports at
 L<https://www.cpantesters.org/> for details of how to get involved.
