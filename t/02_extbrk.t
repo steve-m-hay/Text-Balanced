@@ -3,6 +3,7 @@ use 5.008001;
 use strict;
 use warnings;
 use Test::More;
+use Test::NoWarnings qw ( had_no_warnings );
 use Text::Balanced qw ( extract_bracketed );
 
 our $DEBUG;
@@ -39,6 +40,7 @@ while (defined($str = <DATA>))
     diag $@ if $@ && $DEBUG;
 }
 
+had_no_warnings;
 done_testing;
 
 __DATA__

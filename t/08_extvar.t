@@ -3,6 +3,7 @@ use 5.008001;
 use strict;
 use warnings;
 use Test::More;
+use Test::NoWarnings qw ( had_no_warnings );
 use Text::Balanced qw ( extract_variable );
 
 our $DEBUG;
@@ -43,6 +44,7 @@ while (defined($str = <DATA>))
 my @res = extract_variable('${a}');
 is $res[0], '${a}' or diag "error was: $@";
 
+had_no_warnings;
 done_testing;
 
 __DATA__
