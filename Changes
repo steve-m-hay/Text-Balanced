@@ -1,6 +1,6 @@
 Revision history for Perl distribution Text-Balanced.
 
-2.07 Development
+2.07 2025-08-03
 
     - Fix "uninitialized value $unkpos" warnings.  [michal-josef-spacek, PR#8]
 
