@@ -58,7 +58,7 @@ Revision history for Perl distribution Text-Balanced.
 2.04 2020-12-11
 
     - Fixed INSTALLDIRS to account for the @INC reordering change in Perl 5.12.
-      See Perl RT#116479 for details.  (Text-Balanced entered the perl core in
+      See Perl GH#12722 for details.  (Text-Balanced entered the perl core in
       Perl 5.7.1 so that's what the lower bound of the check should strictly be,
       but since we only support Perl 5.8.1 and higher anyway we do not need to
       check the lower bound.  The upper bound is correctly Perl 5.11.0 since the
