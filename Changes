@@ -2,7 +2,10 @@ Revision history for Perl distribution Text-Balanced.
 
 2.07 Development
 
-    - TODO
+    - Fix "uninitialized value $unkpos" warnings.  [michal-josef-spacek, PR#8]
+
+    - Removed dead cpanratings.perl.org link.  [peter.john.acklam@gmail.com,
+      CPAN RT#148045]
 
 2.06 2022-06-05
 
@@ -43,7 +46,7 @@ Revision history for Perl distribution Text-Balanced.
     - Fix extract_variable() not recognising ${var} end of string.  [Ed J, CPAN
       RT#70007]
 
-    - Fix string-comparing $@ causing exception.  [Ed J, CPAN RT#74994)
+    - Fix string-comparing $@ causing exception.  [Ed J, CPAN RT#74994]
 
     - Update documentation to correct CSV example.  [djerius@cpan.org, CPAN
       RT#140408]
