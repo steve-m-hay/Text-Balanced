@@ -3,6 +3,7 @@ use 5.008001;
 use strict;
 use warnings;
 use Text::Balanced qw ( gen_extract_tagged );
+use Test::NoWarnings qw ( had_no_warnings );
 use Test::More;
 
 our $DEBUG;
@@ -52,6 +53,7 @@ while (defined($str = <DATA>))
     ($neg ? \&unlike : \&like)->( $str, qr/\A;/, "$orig_str matched scalar");
 }
 
+had_no_warnings;
 done_testing;
 
 __DATA__

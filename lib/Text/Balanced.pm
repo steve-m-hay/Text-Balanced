@@ -14,6 +14,7 @@ package Text::Balanced;
 
 use 5.008001;
 use strict;
+use warnings;
 use Exporter ();
 
 use vars qw { $VERSION @ISA %EXPORT_TAGS };

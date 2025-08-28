@@ -3,6 +3,7 @@ use 5.008001;
 use strict;
 use warnings;
 use Test::More;
+use Test::NoWarnings qw ( had_no_warnings );
 use Text::Balanced qw ( extract_codeblock );
 
 our $DEBUG;
@@ -58,6 +59,7 @@ pos $grammar = 26;
 ($out) = extract_codeblock($grammar,'{([',undef,'(',1);
 is $out, '(/b/)', 'PRD error';
 
+had_no_warnings;
 done_testing;
 
 __DATA__

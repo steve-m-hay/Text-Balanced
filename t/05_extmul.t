@@ -3,6 +3,7 @@ use 5.008001;
 use strict;
 use warnings;
 use Test::More;
+use Test::NoWarnings qw ( had_no_warnings );
 use Text::Balanced qw ( :ALL );
 
 our $DEBUG;
@@ -376,4 +377,5 @@ expect [ extract_multiple($slashmatch, [
 ]) ],
   [ '$_', ' = 1 unless defined ', '$_', ' and ', '/\\d\\b/', ";\n" ];
 
+had_no_warnings;
 done_testing;
