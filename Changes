@@ -2,7 +2,11 @@ Revision history for Perl distribution Text-Balanced.
 
 2.08 Development
 
-    - TODO
+    - Fix unbounded memory use (DoS) when extract_codeblock or extract_tagged is
+      called with deeply nested or maliciously crafted input.  _match_codeblock
+      and _match_tagged now enforce a recursion depth limit via the new
+      $Text::Balanced::MAX_DEPTH package variable (default 10,000).  Callers
+      that need a different limit can set it before calling.
 
 2.07 2025-08-03
 
