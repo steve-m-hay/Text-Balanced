@@ -1,6 +1,6 @@
 Revision history for Perl distribution Text-Balanced.
 
-2.08 Development
+2.08 2026-11-21
 
     - Fix quadratic time complexity (DoS) in extract_multiple when processing
       input containing no matched fields.  _update_patvalid was called with the

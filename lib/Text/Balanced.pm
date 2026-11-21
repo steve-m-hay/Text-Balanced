@@ -1,6 +1,6 @@
 # Copyright (C) 1997-2001 Damian Conway.  All rights reserved.
 # Copyright (C) 2009 Adam Kennedy.
-# Copyright (C) 2015, 2022 Steve Hay and other contributors.  All rights
+# Copyright (C) 2015, 2022, 2026 Steve Hay and other contributors.  All rights
 # reserved.
 
 # This module is free software; you can redistribute it and/or modify it under
@@ -2452,8 +2452,8 @@ Copyright (C) 1997-2001 Damian Conway.  All rights reserved.
 
 Copyright (C) 2009 Adam Kennedy.
 
-Copyright (C) 2015, 2020, 2022 Steve Hay and other contributors.  All rights
-reserved.
+Copyright (C) 2015, 2020, 2022, 2026 Steve Hay and other contributors.  All
+rights reserved.
 
 =head1 LICENCE
 
@@ -2467,7 +2467,7 @@ Version 2.08
 
 =head1 DATE
 
-TODO
+21 Nov 2026
 
 =head1 HISTORY
 
