@@ -1018,8 +1018,10 @@ sub extract_multiple (;$$$$)    # ($text, $functions_ref, $max_fields, $ignoreun
             {
                 $unkpos = pos($$textref)-1
                     unless $igunk || defined $unkpos;
-                _update_patvalid($textref, substr $$textref, defined $unkpos ? $unkpos : 0,
-                                 pos($$textref) - (defined $unkpos ? $unkpos : 0));
+                my $curpos = pos($$textref);
+                my $tailstart = $curpos > 10 ? $curpos - 10 : 0;
+                _update_patvalid($textref, substr $$textref, $tailstart,
+                                 $curpos - $tailstart);
             }
         }
 
